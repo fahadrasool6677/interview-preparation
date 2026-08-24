@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Testing — Node.js Interview Prep</title>
+  <link rel="stylesheet" href="../assets/prep.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" />
+</head>
+<body data-page="phase" data-phase="14">
+  <div class="app">
+    <nav class="sidebar">
+      <h1>Node.js Interview Prep</h1>
+      <p class="tag">5-year · Backend / Full-stack · Senior track</p>
+      <a class="nav-link" href="../nodejs-interview-preparation.html">← Hub</a>
+      <div class="nav-group">Phases</div>
+      <div id="phase-links">
+        <a class="nav-link" href="01-javascript.html">01 JavaScript</a>
+        <a class="nav-link" href="02-nodejs.html">02 Node.js</a>
+        <a class="nav-link" href="03-typescript.html">03 TypeScript</a>
+        <a class="nav-link" href="04-express.html">04 Express</a>
+        <a class="nav-link" href="05-rest.html">05 REST APIs</a>
+        <a class="nav-link" href="06-databases.html">06 Databases</a>
+        <a class="nav-link" href="07-redis.html">07 Redis</a>
+        <a class="nav-link" href="08-auth-security.html">08 Auth &amp; Security</a>
+        <a class="nav-link" href="09-microservices.html">09 Microservices</a>
+        <a class="nav-link" href="10-queues.html">10 Queues</a>
+        <a class="nav-link" href="11-system-design.html">11 System Design</a>
+        <a class="nav-link" href="12-performance.html">12 Performance</a>
+        <a class="nav-link" href="13-docker.html">13 Docker &amp; Deploy</a>
+        <a class="nav-link" href="14-testing.html">14 Testing</a>
+        <a class="nav-link" href="15-coding.html">15 Coding</a>
+        <a class="nav-link" href="16-projects.html">16 Projects</a>
+      </div>
+      <div class="meta">Mark topics reviewed as you go. Progress is stored in this browser.</div>
+    </nav>
+    <main>
+      <p class="kicker">Phase 14 · Confidence engineering</p>
+      <header class="hero">
+        <h2>Testing</h2>
+        <p class="lead">Choose test boundaries by risk, verify real contracts, and keep asynchronous systems deterministic.</p>
+      </header>
+      <div class="note">Interview shape: claim → mechanism → production example → failure → trade-off. Reveal answers only after you attempt them aloud.</div>
+      <div class="phase-layout">
+        <aside class="toc">
+          <strong>On this page</strong>
+          <div class="toc-list"></div>
+        </aside>
+        <div class="topics">
+          
+  <article class="topic" id="unit-testing">
+    <div class="topic-head">
+      <h3>Unit testing</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Unit tests exercise a small behavior through a stable public interface with fast, deterministic collaborators.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>They localize failures and support refactoring when they assert outcomes rather than implementation details.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>function total(items) {
+  return items.reduce((sum, item) =&gt; sum + item.price * item.quantity, 0);
+}
+test('calculates an order total', () =&gt; {
+  expect(total([{ price: 12, quantity: 2 }])).toBe(24);
+});</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Unit testing as syntax or tooling without discussing its runtime behavior.</li><li>Ignoring observability, rollback, resource limits, and failure recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Where does Unit testing fit in a production Node.js system?</li><li>What failure mode would make you reconsider your Unit testing design?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Unit testing should solve a specific operational or engineering constraint. I would state that constraint, describe the mechanism, and then show how I verify the result in production.</div><div class="speak">I would reconsider the design when its failure domain, operating cost, or recovery time no longer meets the service's SLOs.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How would you operate Unit testing safely during a partial outage?</li><li>Which metrics and trade-offs matter most for Unit testing?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Prefer bounded retries, explicit timeouts, graceful degradation, and a tested rollback path. Preserve enough telemetry to distinguish application, dependency, and infrastructure failures.</div><div class="speak">Measure user-visible latency and errors first, then saturation, capacity, cost, and recovery time. Optimize only after identifying the binding constraint.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Unit-test a pricing policy using boundary values, invalid data, and table-driven cases without testing private functions.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="integration-testing">
+    <div class="topic-head">
+      <h3>Integration testing</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Integration tests verify contracts across real boundaries such as application-to-database, queue, filesystem, or HTTP adapter.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Many production defects live in serialization, schema, transaction, and configuration boundaries that mocks cannot faithfully reproduce.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>beforeAll(async () =&gt; db.migrate.latest());
+afterEach(async () =&gt; db('orders').truncate());
+test('persists an order atomically', async () =&gt; {
+  const order = await repository.create({ customerId: 'c1', total: 42 });
+  expect(await db('orders').where({ id: order.id }).first()).toMatchObject({ total: 42 });
+});</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Integration testing as syntax or tooling without discussing its runtime behavior.</li><li>Ignoring observability, rollback, resource limits, and failure recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Where does Integration testing fit in a production Node.js system?</li><li>What failure mode would make you reconsider your Integration testing design?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Integration testing should solve a specific operational or engineering constraint. I would state that constraint, describe the mechanism, and then show how I verify the result in production.</div><div class="speak">I would reconsider the design when its failure domain, operating cost, or recovery time no longer meets the service's SLOs.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How would you operate Integration testing safely during a partial outage?</li><li>Which metrics and trade-offs matter most for Integration testing?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Prefer bounded retries, explicit timeouts, graceful degradation, and a tested rollback path. Preserve enough telemetry to distinguish application, dependency, and infrastructure failures.</div><div class="speak">Measure user-visible latency and errors first, then saturation, capacity, cost, and recovery time. Optimize only after identifying the binding constraint.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Use an isolated real database to test a transaction rollback and a uniqueness conflict.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="end-to-end-testing">
+    <div class="topic-head">
+      <h3>End-to-end testing</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>End-to-end tests exercise a critical user flow through deployed system boundaries, from public interface to durable effects.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>They provide high confidence in wiring and contracts but are slower and harder to diagnose, so keep the suite focused on high-value journeys.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Arrange: create a customer and inventory
+Act: POST /orders with an idempotency key
+Assert: 201 response, persisted order, inventory reservation, emitted event
+Cleanup: delete test-owned data</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining End-to-end testing as syntax or tooling without discussing its runtime behavior.</li><li>Ignoring observability, rollback, resource limits, and failure recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Where does End-to-end testing fit in a production Node.js system?</li><li>What failure mode would make you reconsider your End-to-end testing design?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">End-to-end testing should solve a specific operational or engineering constraint. I would state that constraint, describe the mechanism, and then show how I verify the result in production.</div><div class="speak">I would reconsider the design when its failure domain, operating cost, or recovery time no longer meets the service's SLOs.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How would you operate End-to-end testing safely during a partial outage?</li><li>Which metrics and trade-offs matter most for End-to-end testing?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Prefer bounded retries, explicit timeouts, graceful degradation, and a tested rollback path. Preserve enough telemetry to distinguish application, dependency, and infrastructure failures.</div><div class="speak">Measure user-visible latency and errors first, then saturation, capacity, cost, and recovery time. Optimize only after identifying the binding constraint.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design three E2E tests for checkout that maximize risk coverage without duplicating lower-level tests.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="jest">
+    <div class="topic-head">
+      <h3>Jest</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Jest provides test discovery, assertions, spies, mocks, fake timers, coverage, and worker isolation for JavaScript and TypeScript projects.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>A coherent runner shortens feedback, but global state, leaked handles, module mocking, and parallel execution can create false confidence or flaky tests.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>afterEach(() =&gt; {
+  jest.restoreAllMocks();
+  jest.useRealTimers();
+});
+test('expires cached data', () =&gt; {
+  jest.useFakeTimers();
+  const cache = createCache({ ttlMs: 1000 });
+  cache.set('x', 1);
+  jest.advanceTimersByTime(1001);
+  expect(cache.get('x')).toBeUndefined();
+});</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Jest as syntax or tooling without discussing its runtime behavior.</li><li>Ignoring observability, rollback, resource limits, and failure recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Where does Jest fit in a production Node.js system?</li><li>What failure mode would make you reconsider your Jest design?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Jest should solve a specific operational or engineering constraint. I would state that constraint, describe the mechanism, and then show how I verify the result in production.</div><div class="speak">I would reconsider the design when its failure domain, operating cost, or recovery time no longer meets the service's SLOs.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How would you operate Jest safely during a partial outage?</li><li>Which metrics and trade-offs matter most for Jest?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Prefer bounded retries, explicit timeouts, graceful degradation, and a tested rollback path. Preserve enough telemetry to distinguish application, dependency, and infrastructure failures.</div><div class="speak">Measure user-visible latency and errors first, then saturation, capacity, cost, and recovery time. Optimize only after identifying the binding constraint.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Configure separate Jest unit and integration projects with appropriate timeouts, setup, and worker counts.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="mocking">
+    <div class="topic-head">
+      <h3>Mocking</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Mocking replaces a collaborator and can control responses or verify interactions. Mock at architectural seams, not arbitrary internal calls.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Mocks make rare failures deterministic, but they can drift from real contracts and couple tests to implementation.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>const paymentGateway = { charge: jest.fn().mockResolvedValue({ id: 'p1' }) };
+const service = new CheckoutService({ paymentGateway });
+await service.checkout(order);
+expect(paymentGateway.charge).toHaveBeenCalledWith({ amount: order.total, idempotencyKey: order.id });</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Mocking as syntax or tooling without discussing its runtime behavior.</li><li>Ignoring observability, rollback, resource limits, and failure recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Where does Mocking fit in a production Node.js system?</li><li>What failure mode would make you reconsider your Mocking design?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Mocking should solve a specific operational or engineering constraint. I would state that constraint, describe the mechanism, and then show how I verify the result in production.</div><div class="speak">I would reconsider the design when its failure domain, operating cost, or recovery time no longer meets the service's SLOs.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How would you operate Mocking safely during a partial outage?</li><li>Which metrics and trade-offs matter most for Mocking?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Prefer bounded retries, explicit timeouts, graceful degradation, and a tested rollback path. Preserve enough telemetry to distinguish application, dependency, and infrastructure failures.</div><div class="speak">Measure user-visible latency and errors first, then saturation, capacity, cost, and recovery time. Optimize only after identifying the binding constraint.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Test payment timeout handling with a mock, then add a contract test that proves the real adapter matches the mock's shape.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="test-doubles">
+    <div class="topic-head">
+      <h3>Test doubles</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>A dummy fills an unused parameter, a stub returns canned data, a spy records calls, a mock encodes interaction expectations, and a fake provides a working simplified implementation.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Naming the double clarifies the test's purpose and warns about fidelity. An in-memory fake is useful but may not reproduce database constraints or concurrency.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>dummy: unused logger
+stub: clock.now() returns a fixed instant
+spy: records email sends
+mock: expects one payment charge
+fake: in-memory repository implementing Repository</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Test doubles as syntax or tooling without discussing its runtime behavior.</li><li>Ignoring observability, rollback, resource limits, and failure recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Where does Test doubles fit in a production Node.js system?</li><li>What failure mode would make you reconsider your Test doubles design?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Test doubles should solve a specific operational or engineering constraint. I would state that constraint, describe the mechanism, and then show how I verify the result in production.</div><div class="speak">I would reconsider the design when its failure domain, operating cost, or recovery time no longer meets the service's SLOs.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How would you operate Test doubles safely during a partial outage?</li><li>Which metrics and trade-offs matter most for Test doubles?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Prefer bounded retries, explicit timeouts, graceful degradation, and a tested rollback path. Preserve enough telemetry to distinguish application, dependency, and infrastructure failures.</div><div class="speak">Measure user-visible latency and errors first, then saturation, capacity, cost, and recovery time. Optimize only after identifying the binding constraint.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Implement one example of each test double for an order service and state the risk each introduces.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="api-testing">
+    <div class="topic-head">
+      <h3>API testing</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>API tests validate status, headers, body schema, authentication, idempotency, pagination, validation, and error contracts through the HTTP boundary.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Clients depend on protocol behavior, not controller internals. Contract-focused tests detect accidental breaking changes.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>const response = await request(app)
+  .post('/orders')
+  .set('Idempotency-Key', 'test-key-1')
+  .send({ sku: 'A1', quantity: 2 });
+expect(response.status).toBe(201);
+expect(response.headers.location).toMatch(/^\/orders\//);
+expect(response.body).toMatchObject({ status: 'pending' });</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining API testing as syntax or tooling without discussing its runtime behavior.</li><li>Ignoring observability, rollback, resource limits, and failure recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Where does API testing fit in a production Node.js system?</li><li>What failure mode would make you reconsider your API testing design?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">API testing should solve a specific operational or engineering constraint. I would state that constraint, describe the mechanism, and then show how I verify the result in production.</div><div class="speak">I would reconsider the design when its failure domain, operating cost, or recovery time no longer meets the service's SLOs.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How would you operate API testing safely during a partial outage?</li><li>Which metrics and trade-offs matter most for API testing?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Prefer bounded retries, explicit timeouts, graceful degradation, and a tested rollback path. Preserve enough telemetry to distinguish application, dependency, and infrastructure failures.</div><div class="speak">Measure user-visible latency and errors first, then saturation, capacity, cost, and recovery time. Optimize only after identifying the binding constraint.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Test an API's malformed JSON, validation, auth, conflict, rate-limit, and idempotent replay behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="database-testing">
+    <div class="topic-head">
+      <h3>Database testing</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Database tests verify migrations, constraints, queries, transactions, isolation, indexes, and repository mappings against the actual database engine.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>In-memory substitutes differ in SQL semantics, locking, and query planning. Isolation strategies must keep parallel tests deterministic.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>per test suite:
+  start isolated database/container
+  apply production migrations
+per test:
+  begin transaction or truncate owned tables
+assert:
+  constraints, rollback, query results, execution plan where critical</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Database testing as syntax or tooling without discussing its runtime behavior.</li><li>Ignoring observability, rollback, resource limits, and failure recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Where does Database testing fit in a production Node.js system?</li><li>What failure mode would make you reconsider your Database testing design?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Database testing should solve a specific operational or engineering constraint. I would state that constraint, describe the mechanism, and then show how I verify the result in production.</div><div class="speak">I would reconsider the design when its failure domain, operating cost, or recovery time no longer meets the service's SLOs.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How would you operate Database testing safely during a partial outage?</li><li>Which metrics and trade-offs matter most for Database testing?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Prefer bounded retries, explicit timeouts, graceful degradation, and a tested rollback path. Preserve enough telemetry to distinguish application, dependency, and infrastructure failures.</div><div class="speak">Measure user-visible latency and errors first, then saturation, capacity, cost, and recovery time. Optimize only after identifying the binding constraint.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Prove that two concurrent inventory reservations cannot oversell and inspect the locking behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="test-coverage">
+    <div class="topic-head">
+      <h3>Test coverage</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Coverage measures executed statements, branches, functions, and lines; mutation testing measures whether tests detect behavioral changes.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Coverage finds unexercised code but cannot prove meaningful assertions. Branch risk and mutation survival are stronger guides than a single percentage target.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>npx jest --coverage
+npx stryker run</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Review uncovered branches and surviving mutants, not only the headline percentage.</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Test coverage as syntax or tooling without discussing its runtime behavior.</li><li>Ignoring observability, rollback, resource limits, and failure recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Where does Test coverage fit in a production Node.js system?</li><li>What failure mode would make you reconsider your Test coverage design?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Test coverage should solve a specific operational or engineering constraint. I would state that constraint, describe the mechanism, and then show how I verify the result in production.</div><div class="speak">I would reconsider the design when its failure domain, operating cost, or recovery time no longer meets the service's SLOs.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How would you operate Test coverage safely during a partial outage?</li><li>Which metrics and trade-offs matter most for Test coverage?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Prefer bounded retries, explicit timeouts, graceful degradation, and a tested rollback path. Preserve enough telemetry to distinguish application, dependency, and infrastructure failures.</div><div class="speak">Measure user-visible latency and errors first, then saturation, capacity, cost, and recovery time. Optimize only after identifying the binding constraint.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Raise confidence in a low-coverage authorization module by targeting risky branches, then compare coverage with mutation results.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="testing-asynchronous-code">
+    <div class="topic-head">
+      <h3>Testing asynchronous code</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Async tests must return or await the promise, control time explicitly, and observe eventual effects without arbitrary sleeps.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Unawaited work creates false positives and open handles. Polling with a deadline or fake timers makes eventual behavior deterministic.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>test('retries once after a transient error', async () =&gt; {
+  const operation = jest.fn()
+    .mockRejectedValueOnce(new Error('temporary'))
+    .mockResolvedValue('ok');
+  await expect(retry(operation, { attempts: 2, delayMs: 0 })).resolves.toBe('ok');
+  expect(operation).toHaveBeenCalledTimes(2);
+});</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Testing asynchronous code as syntax or tooling without discussing its runtime behavior.</li><li>Ignoring observability, rollback, resource limits, and failure recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Where does Testing asynchronous code fit in a production Node.js system?</li><li>What failure mode would make you reconsider your Testing asynchronous code design?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Testing asynchronous code should solve a specific operational or engineering constraint. I would state that constraint, describe the mechanism, and then show how I verify the result in production.</div><div class="speak">I would reconsider the design when its failure domain, operating cost, or recovery time no longer meets the service's SLOs.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How would you operate Testing asynchronous code safely during a partial outage?</li><li>Which metrics and trade-offs matter most for Testing asynchronous code?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Prefer bounded retries, explicit timeouts, graceful degradation, and a tested rollback path. Preserve enough telemetry to distinguish application, dependency, and infrastructure failures.</div><div class="speak">Measure user-visible latency and errors first, then saturation, capacity, cost, and recovery time. Optimize only after identifying the binding constraint.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Test cancellation, timeout, retry exhaustion, and an event emitted after a transaction commits.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="mock-boundaries">
+    <div class="topic-head">
+      <h3>What should and should not be mocked</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Mock nondeterministic or expensive external boundaries when testing application policy: payment providers, clocks, random IDs, email, and remote APIs. Do not mock the code under test, plain value objects, or database behavior in tests intended to validate SQL.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>The goal is deterministic tests without inventing a parallel implementation of reality. Use real local infrastructure for contracts and mocks for controlled application-level scenarios.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Usually mock: remote payment API, email gateway, clock, UUID source
+Usually real: domain functions, serializers, repository SQL in integration tests
+Use both: mock remote adapter in service tests + provider contract/sandbox tests</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Mocking every dependency until the test only verifies mock wiring.</li><li>Calling real third-party services from the fast unit suite.</li><li>Using an in-memory fake as proof that production SQL and locking work.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Where does What should and should not be mocked fit in a production Node.js system?</li><li>What failure mode would make you reconsider your What should and should not be mocked design?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">What should and should not be mocked should solve a specific operational or engineering constraint. I would state that constraint, describe the mechanism, and then show how I verify the result in production.</div><div class="speak">I would reconsider the design when its failure domain, operating cost, or recovery time no longer meets the service's SLOs.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How would you operate What should and should not be mocked safely during a partial outage?</li><li>Which metrics and trade-offs matter most for What should and should not be mocked?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Prefer bounded retries, explicit timeouts, graceful degradation, and a tested rollback path. Preserve enough telemetry to distinguish application, dependency, and infrastructure failures.</div><div class="speak">Measure user-visible latency and errors first, then saturation, capacity, cost, and recovery time. Optimize only after identifying the binding constraint.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Draw the test boundaries for an order service and justify every real dependency, fake, stub, and mock.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+          
+          
+          <div class="phase-nav"><a class="btn btn-ghost" href="13-docker.html">← Phase 13 · Docker & Deployment</a><a class="btn btn-primary" href="15-coding.html">Phase 15 · Coding →</a></div>
+        </div>
+      </div>
+      <footer class="fine">Phase 14 · Node.js / TypeScript interview preparation</footer>
+    </main>
+  </div>
+  <script src="../assets/prep.js"></script>
+</body>
+</html>

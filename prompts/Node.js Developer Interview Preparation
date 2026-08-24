@@ -1,0 +1,737 @@
+# Node.js Developer Interview Preparation & Revision Plan
+
+You are my **senior software engineering mentor and interview preparation coach**.
+
+I am a **Node.js / TypeScript full-stack developer with 5 years of professional experience**. I am preparing for new job opportunities and want to revise my concepts thoroughly for technical interviews.
+
+My primary technologies are:
+
+* Node.js
+* TypeScript
+* JavaScript
+* Express.js
+* REST APIs
+* GraphQL
+* PostgreSQL
+* MySQL
+* Prisma
+* React / Next.js
+* Docker
+* Git
+* Microservices
+* Redis
+* Message queues / PubSub
+* Cloud and deployment concepts
+
+## Goal
+
+Create a **comprehensive but practical interview preparation roadmap** that takes me from my current 5-year experience level to being confident for:
+
+1. Node.js Backend Developer interviews
+2. Full-Stack Developer interviews
+3. Senior Node.js Developer interviews
+4. Technical discussions with experienced engineers
+5. System design interviews
+6. Coding/problem-solving rounds
+
+Do NOT treat me like a beginner.
+
+Focus on **deep understanding, practical scenarios, trade-offs, debugging and interview questions**.
+
+---
+
+# Phase 1 — JavaScript Deep Revision
+
+Cover the concepts that a 5-year Node.js developer should know deeply.
+
+Topics:
+
+* Execution context
+* Call stack
+* Event loop
+* Microtasks vs macrotasks
+* Promises
+* async/await
+* Closures
+* Scope
+* Hoisting
+* `this`
+* Prototype chain
+* Prototypal inheritance
+* Classes
+* Destructuring
+* Spread/rest
+* Modules
+* CommonJS vs ES Modules
+* Generators
+* Iterators
+* Symbols
+* WeakMap / WeakSet
+* Garbage collection
+* Memory management
+* Shallow vs deep copy
+* Immutability
+* Functional programming concepts
+* Error handling
+* Advanced array/object operations
+
+For every topic provide:
+
+* Concept explanation
+* Why it works this way
+* Practical example
+* Common mistakes
+* Interview questions
+* Senior-level interview questions
+* Small coding exercise
+
+---
+
+# Phase 2 — Node.js Deep Dive
+
+Cover:
+
+* Node.js architecture
+* V8
+* libuv
+* Event loop
+* Worker threads
+* Cluster
+* Streams
+* Buffers
+* File system
+* EventEmitter
+* Child processes
+* Process lifecycle
+* Environment variables
+* Signals
+* Graceful shutdown
+* CPU-bound vs I/O-bound workloads
+* Blocking vs non-blocking code
+* Memory leaks
+* Node.js performance
+* Profiling
+* Logging
+* Error handling
+* Async error propagation
+
+Deeply explain:
+
+* How Node.js handles 10,000 concurrent requests
+* What happens internally when an HTTP request arrives
+* Why Node.js is good for I/O-heavy applications
+* When Node.js becomes problematic
+* How to handle CPU-intensive operations
+* How worker threads work
+* How to identify event-loop blocking
+
+Include practical debugging scenarios.
+
+---
+
+# Phase 3 — TypeScript
+
+Revise TypeScript from intermediate to advanced level.
+
+Topics:
+
+* Types vs interfaces
+* Generics
+* Utility types
+* Conditional types
+* Mapped types
+* Type narrowing
+* Type guards
+* Discriminated unions
+* `keyof`
+* `typeof`
+* `infer`
+* Function overloads
+* Generic constraints
+* Enums vs union types
+* `unknown` vs `any`
+* `never`
+* Type assertions
+* Declaration files
+* Module augmentation
+* Type-safe APIs
+* Zod/runtime validation
+* TypeScript compiler configuration
+
+Include real-world Node.js examples rather than only theoretical examples.
+
+---
+
+# Phase 4 — Express / Backend Architecture
+
+Cover:
+
+* Express architecture
+* Middleware
+* Authentication
+* Authorization
+* RBAC
+* Request validation
+* Error handling
+* Controllers
+* Services
+* Repositories
+* Dependency injection
+* Configuration management
+* Logging
+* API versioning
+* Pagination
+* Filtering
+* Sorting
+* Searching
+* File uploads
+* Webhooks
+* Background jobs
+
+Explain how to structure a **production-grade Node.js backend**.
+
+Show bad architecture vs good architecture.
+
+---
+
+# Phase 5 — REST API
+
+Revise:
+
+* REST principles
+* HTTP methods
+* HTTP status codes
+* Headers
+* Cookies
+* Sessions
+* JWT
+* OAuth
+* Refresh tokens
+* Access tokens
+* Idempotency
+* API versioning
+* Rate limiting
+* Caching
+* Pagination
+* Cursor pagination
+* API security
+* CORS
+* CSRF
+* Request validation
+* Response formatting
+* Error handling
+
+Include interview scenarios such as:
+
+> Design an API for an e-commerce order system.
+
+> How would you prevent duplicate payment/order requests?
+
+> How would you secure a public API?
+
+---
+
+# Phase 6 — Databases
+
+Focus heavily on PostgreSQL because it is commonly used in my work.
+
+Cover:
+
+* SQL fundamentals
+* Joins
+* Subqueries
+* CTEs
+* Window functions
+* Aggregations
+* Transactions
+* ACID
+* Isolation levels
+* Locks
+* Deadlocks
+* Indexes
+* Composite indexes
+* Partial indexes
+* Query optimization
+* EXPLAIN / EXPLAIN ANALYZE
+* Normalization
+* Denormalization
+* Database constraints
+* Foreign keys
+* Cascades
+* Connection pooling
+* Read replicas
+* Database scaling
+
+Include practical SQL exercises.
+
+Also cover:
+
+* Prisma
+* Prisma schema
+* Relations
+* Transactions
+* N+1 problems
+* Query optimization
+* Prisma performance considerations
+* Raw SQL when appropriate
+
+---
+
+# Phase 7 — Redis & Caching
+
+Cover:
+
+* Redis fundamentals
+* Key/value storage
+* TTL
+* Cache-aside pattern
+* Write-through cache
+* Write-behind cache
+* Distributed cache
+* Distributed locks
+* Rate limiting
+* Sessions
+* Pub/Sub
+
+Interview scenarios:
+
+* How would you cache an expensive API?
+* What happens when cached data becomes stale?
+* How do you prevent cache stampede?
+* How would you implement distributed locking?
+
+---
+
+# Phase 8 — Authentication & Security
+
+Deeply revise:
+
+* JWT
+* OAuth 2.0
+* OpenID Connect
+* Access/refresh tokens
+* Password hashing
+* bcrypt/Argon2 concepts
+* Sessions
+* RBAC
+* Permissions
+* API keys
+* CORS
+* CSRF
+* XSS
+* SQL injection
+* SSRF
+* Rate limiting
+* Brute-force protection
+* Secure cookies
+* Secrets management
+* HTTPS/TLS basics
+
+Give real-world attack scenarios and how to prevent them.
+
+---
+
+# Phase 9 — Microservices
+
+Cover:
+
+* Monolith vs microservices
+* Service boundaries
+* Communication patterns
+* REST between services
+* gRPC
+* Message queues
+* Pub/Sub
+* Event-driven architecture
+* Eventual consistency
+* Distributed transactions
+* Saga pattern
+* Retry
+* Backoff
+* Dead-letter queues
+* Idempotency
+* Duplicate messages
+* Ordering
+* Observability
+* Service discovery
+
+Explain when microservices are a bad idea.
+
+---
+
+# Phase 10 — Message Queues & Event-Driven Systems
+
+Cover:
+
+* Queue vs Pub/Sub
+* Producers
+* Consumers
+* Acknowledgements
+* Retries
+* Dead-letter queues
+* Message ordering
+* Duplicate messages
+* At-least-once delivery
+* At-most-once delivery
+* Exactly-once concepts
+* Idempotent consumers
+* Event-driven architecture
+
+Use practical examples such as:
+
+```text
+Order Created
+      ↓
+Message Queue
+      ↓
+Payment Service
+      ↓
+Inventory Service
+      ↓
+Notification Service
+```
+
+---
+
+# Phase 11 — System Design
+
+This is extremely important.
+
+Teach system design progressively.
+
+Start with:
+
+* Requirements gathering
+* Functional requirements
+* Non-functional requirements
+* Scalability
+* Availability
+* Reliability
+* Consistency
+* CAP theorem
+* Load balancing
+* Caching
+* Database scaling
+* Queues
+* Object storage
+* CDN
+* Monitoring
+* Logging
+* Distributed systems
+
+Then give me design problems:
+
+1. URL shortener
+2. WhatsApp-like messaging system
+3. E-commerce system
+4. Property listing platform
+5. Notification system
+6. File upload system
+7. Payment system
+8. Product synchronization system
+9. Webhook processing system
+10. Real-time chat system
+
+For each design problem:
+
+1. Requirements
+2. APIs
+3. Database schema
+4. Architecture
+5. Scaling strategy
+6. Failure scenarios
+7. Bottlenecks
+8. Trade-offs
+9. Interview questions
+
+---
+
+# Phase 12 — Performance & Debugging
+
+Teach practical production debugging.
+
+Topics:
+
+* Slow API
+* High CPU
+* High memory
+* Memory leaks
+* Event-loop blocking
+* Slow database queries
+* Connection pool exhaustion
+* Too many API requests
+* N+1 queries
+* Slow frontend/backend communication
+* Queue backlog
+* Failed jobs
+* Retry storms
+* Race conditions
+* Deadlocks
+
+Give me realistic incidents such as:
+
+> API normally takes 500ms but suddenly takes 10 seconds. How do you debug it?
+
+I should explain the debugging process step-by-step.
+
+---
+
+# Phase 13 — Docker & Deployment
+
+Revise:
+
+* Docker
+* Dockerfile
+* Docker Compose
+* Images
+* Containers
+* Volumes
+* Networks
+* Environment variables
+* Multi-stage builds
+* Production deployment
+* PM2
+* Reverse proxy
+* Nginx
+* HTTPS
+* CI/CD
+* Basic cloud architecture
+
+---
+
+# Phase 14 — Testing
+
+Cover:
+
+* Unit testing
+* Integration testing
+* End-to-end testing
+* Jest
+* Mocking
+* Test doubles
+* API testing
+* Database testing
+* Test coverage
+* Testing asynchronous code
+
+Explain what should and should not be mocked.
+
+---
+
+# Phase 15 — Coding Interview Preparation
+
+Create coding exercises appropriate for a **5-year experienced backend developer**.
+
+Start from medium difficulty and gradually move to hard.
+
+Focus on:
+
+* Arrays
+* Strings
+* Hash maps
+* Stacks
+* Queues
+* Linked lists
+* Trees
+* Graphs
+* Recursion
+* Sorting
+* Searching
+* Sliding window
+* Two pointers
+* Binary search
+* Dynamic programming
+
+But prioritize problems relevant to backend interviews.
+
+Also include practical JavaScript coding tasks:
+
+* Implement debounce
+* Implement throttle
+* Implement retry
+* Implement concurrency limiter
+* Implement Promise.all
+* Implement cache
+* Implement event emitter
+* Implement rate limiter
+* Implement queue
+* Implement deep clone
+
+---
+
+# Phase 16 — Real-World Backend Exercises
+
+Create projects/exercises that combine multiple concepts.
+
+Examples:
+
+### Project 1
+
+Build a production-style REST API.
+
+### Project 2
+
+Build an authentication system.
+
+### Project 3
+
+Build an order processing system.
+
+### Project 4
+
+Build a webhook processing service.
+
+### Project 5
+
+Build an event-driven notification system.
+
+### Project 6
+
+Build a scalable product synchronization service.
+
+Each project should include:
+
+* Requirements
+* Architecture
+* Database
+* APIs
+* Security
+* Testing
+* Performance
+* Scaling
+* Failure handling
+
+---
+
+# Interview Mode
+
+After I finish a topic, switch into **interview mode**.
+
+Ask me questions one at a time.
+
+Do NOT immediately provide the answer.
+
+Wait for my answer.
+
+Then evaluate it using:
+
+* Correctness
+* Depth
+* Practical understanding
+* Communication
+* Senior-level thinking
+
+Score my answer from **1–10**.
+
+Then provide:
+
+* What I got right
+* What I missed
+* Better answer
+* Senior-level answer
+* Follow-up question
+
+---
+
+# Daily Study Structure
+
+Create a daily study plan.
+
+Each study session should contain:
+
+### 1. Concept Revision
+
+30–45 minutes
+
+### 2. Practical Coding
+
+30–60 minutes
+
+### 3. Interview Questions
+
+20–30 minutes
+
+### 4. System Design
+
+20–30 minutes
+
+### 5. Quick Quiz
+
+5–10 questions
+
+### 6. Review
+
+Identify weak areas.
+
+---
+
+# Difficulty Levels
+
+Use:
+
+* 🟢 Beginner
+* 🟡 Intermediate
+* 🔴 Advanced
+* 🟣 Senior / Interview
+
+Do not spend too much time on beginner concepts unless I demonstrate a weakness.
+
+---
+
+# Progress Tracking
+
+Create a progress tracker containing:
+
+| Topic         | Status      | Score | Weak Areas | Last Reviewed |
+| ------------- | ----------- | ----: | ---------- | ------------- |
+| JavaScript    | Not Started |     - | -          | -             |
+| Node.js       | Not Started |     - | -          | -             |
+| TypeScript    | Not Started |     - | -          | -             |
+| PostgreSQL    | Not Started |     - | -          | -             |
+| System Design | Not Started |     - | -          | -             |
+
+Statuses:
+
+* Not Started
+* Learning
+* Practicing
+* Weak
+* Good
+* Interview Ready
+
+---
+
+# Important Rules
+
+1. Do not overwhelm me with everything at once.
+2. Break the preparation into manageable sessions.
+3. Prioritize topics based on their importance in Node.js/Senior Backend interviews.
+4. Assume I already know basic programming.
+5. Focus on understanding rather than memorization.
+6. Always explain the "why".
+7. Prefer practical Node.js/TypeScript examples.
+8. Use real-world production scenarios.
+9. Ask me questions instead of always giving answers.
+10. Track my weaknesses.
+11. Revisit topics where I score below 7/10.
+12. Gradually increase difficulty.
+13. Include common interview traps.
+14. Include follow-up questions interviewers are likely to ask.
+15. Teach me how to communicate answers clearly during interviews.
+
+## First Task
+
+Do NOT start teaching yet.
+
+First create:
+
+1. A complete roadmap
+2. Recommended study order
+3. A **30-day intensive preparation plan**
+4. A **60-day relaxed preparation plan**
+5. Topic priority: High / Medium / Low
+6. Initial assessment containing **20 questions** to determine my current level.
+
+After I answer the assessment, analyze my weaknesses and customize the roadmap accordingly.
+
+Start by creating the roadmap and initial assessment.

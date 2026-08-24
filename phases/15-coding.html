@@ -1,0 +1,1223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Coding: DSA &amp; Practical JavaScript — Node.js Interview Prep</title>
+  <link rel="stylesheet" href="../assets/prep.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" />
+</head>
+<body data-page="phase" data-phase="15">
+  <div class="app">
+    <nav class="sidebar">
+      <h1>Node.js Interview Prep</h1>
+      <p class="tag">5-year · Backend / Full-stack · Senior track</p>
+      <a class="nav-link" href="../nodejs-interview-preparation.html">← Hub</a>
+      <div class="nav-group">Phases</div>
+      <div id="phase-links">
+        <a class="nav-link" href="01-javascript.html">01 JavaScript</a>
+        <a class="nav-link" href="02-nodejs.html">02 Node.js</a>
+        <a class="nav-link" href="03-typescript.html">03 TypeScript</a>
+        <a class="nav-link" href="04-express.html">04 Express</a>
+        <a class="nav-link" href="05-rest.html">05 REST APIs</a>
+        <a class="nav-link" href="06-databases.html">06 Databases</a>
+        <a class="nav-link" href="07-redis.html">07 Redis</a>
+        <a class="nav-link" href="08-auth-security.html">08 Auth &amp; Security</a>
+        <a class="nav-link" href="09-microservices.html">09 Microservices</a>
+        <a class="nav-link" href="10-queues.html">10 Queues</a>
+        <a class="nav-link" href="11-system-design.html">11 System Design</a>
+        <a class="nav-link" href="12-performance.html">12 Performance</a>
+        <a class="nav-link" href="13-docker.html">13 Docker &amp; Deploy</a>
+        <a class="nav-link" href="14-testing.html">14 Testing</a>
+        <a class="nav-link" href="15-coding.html">15 Coding</a>
+        <a class="nav-link" href="16-projects.html">16 Projects</a>
+      </div>
+      <div class="meta">Mark topics reviewed as you go. Progress is stored in this browser.</div>
+    </nav>
+    <main>
+      <p class="kicker">Phase 15 · Medium to hard</p>
+      <header class="hero">
+        <h2>Coding: DSA &amp; Practical JavaScript</h2>
+        <p class="lead">Practice backend-flavored invariants, complexity, edge cases, and production-aware JavaScript utilities.</p>
+      </header>
+      <div class="note">Interview shape: claim → mechanism → production example → failure → trade-off. Reveal answers only after you attempt them aloud.</div>
+      <div class="phase-layout">
+        <aside class="toc">
+          <strong>On this page</strong>
+          <div class="toc-list"></div>
+        </aside>
+        <div class="topics">
+          
+  <article class="topic" id="arrays">
+    <div class="topic-head">
+      <h3>Arrays</h3>
+      <span class="badge med">Medium</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Contiguous indexed storage gives O(1) access; backend problems often model event batches, intervals, and capacity timelines.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Track a running balance across sorted capacity deltas. State the invariant first, then derive time and space complexity and test boundary cases.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="runner">
+        <pre class="code" data-code>const changes = [[1, 3], [4, -1], [6, -2]];
+let active = 0, peak = 0;
+for (const [, delta] of changes) { active += delta; peak = Math.max(peak, active); }
+console.log(peak);</pre>
+        <div class="runner-toolbar">
+          <button type="button" class="btn btn-primary btn-sm" data-run>Run</button>
+          <span style="font-size:0.8rem;color:var(--muted)">Runs in-browser; console.log is captured</span>
+        </div>
+        <pre class="runner-out">3</pre>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Choosing a memorized pattern before proving its invariant.</li><li>Ignoring input scale, mutation, Unicode/numeric limits, or worst-case complexity.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Solve a backend-flavored arrays problem and explain the invariant.</li><li>How would input scale or streaming data change the solution?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">I would start with a correct baseline, identify repeated work, then select the data structure that preserves the required invariant.</div><div class="speak">For unbounded input I would avoid retaining the full dataset, use bounded state where possible, and define approximation or spill-to-disk behavior explicitly.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How would you operate Arrays safely during a partial outage?</li><li>Which metrics and trade-offs matter most for Arrays?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Prefer bounded retries, explicit timeouts, graceful degradation, and a tested rollback path. Preserve enough telemetry to distinguish application, dependency, and infrastructure failures.</div><div class="speak">Measure user-visible latency and errors first, then saturation, capacity, cost, and recovery time. Optimize only after identifying the binding constraint.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Track a running balance across sorted capacity deltas. Extend the example with empty, single-item, duplicate, and large-input test cases.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="strings">
+    <div class="topic-head">
+      <h3>Strings</h3>
+      <span class="badge med">Medium</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>JavaScript strings are immutable UTF-16 sequences; parsing protocols requires clear normalization and Unicode assumptions.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Canonicalize an HTTP header token without accidentally changing its value. State the invariant first, then derive time and space complexity and test boundary cases.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="runner">
+        <pre class="code" data-code>const value = '  GZip, BR, gzip ';
+const tokens = [...new Set(value.split(',').map(x =&gt; x.trim().toLowerCase()))];
+console.log(tokens.join(','));</pre>
+        <div class="runner-toolbar">
+          <button type="button" class="btn btn-primary btn-sm" data-run>Run</button>
+          <span style="font-size:0.8rem;color:var(--muted)">Runs in-browser; console.log is captured</span>
+        </div>
+        <pre class="runner-out">gzip,br</pre>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Choosing a memorized pattern before proving its invariant.</li><li>Ignoring input scale, mutation, Unicode/numeric limits, or worst-case complexity.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Solve a backend-flavored strings problem and explain the invariant.</li><li>How would input scale or streaming data change the solution?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">I would start with a correct baseline, identify repeated work, then select the data structure that preserves the required invariant.</div><div class="speak">For unbounded input I would avoid retaining the full dataset, use bounded state where possible, and define approximation or spill-to-disk behavior explicitly.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How would you operate Strings safely during a partial outage?</li><li>Which metrics and trade-offs matter most for Strings?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Prefer bounded retries, explicit timeouts, graceful degradation, and a tested rollback path. Preserve enough telemetry to distinguish application, dependency, and infrastructure failures.</div><div class="speak">Measure user-visible latency and errors first, then saturation, capacity, cost, and recovery time. Optimize only after identifying the binding constraint.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Canonicalize an HTTP header token without accidentally changing its value. Extend the example with empty, single-item, duplicate, and large-input test cases.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="hash-maps">
+    <div class="topic-head">
+      <h3>Hash maps</h3>
+      <span class="badge med">Medium</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Map provides expected O(1) lookup and preserves arbitrary key types; it is the default index for deduplication, joins, and counters.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Aggregate request counts by tenant in one pass. State the invariant first, then derive time and space complexity and test boundary cases.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="runner">
+        <pre class="code" data-code>const tenants = ['a', 'b', 'a', 'c', 'a', 'b'];
+const counts = new Map();
+for (const id of tenants) counts.set(id, (counts.get(id) || 0) + 1);
+console.log(JSON.stringify(Object.fromEntries(counts)));</pre>
+        <div class="runner-toolbar">
+          <button type="button" class="btn btn-primary btn-sm" data-run>Run</button>
+          <span style="font-size:0.8rem;color:var(--muted)">Runs in-browser; console.log is captured</span>
+        </div>
+        <pre class="runner-out">{&quot;a&quot;:3,&quot;b&quot;:2,&quot;c&quot;:1}</pre>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Choosing a memorized pattern before proving its invariant.</li><li>Ignoring input scale, mutation, Unicode/numeric limits, or worst-case complexity.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Solve a backend-flavored hash maps problem and explain the invariant.</li><li>How would input scale or streaming data change the solution?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">I would start with a correct baseline, identify repeated work, then select the data structure that preserves the required invariant.</div><div class="speak">For unbounded input I would avoid retaining the full dataset, use bounded state where possible, and define approximation or spill-to-disk behavior explicitly.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How would you operate Hash maps safely during a partial outage?</li><li>Which metrics and trade-offs matter most for Hash maps?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Prefer bounded retries, explicit timeouts, graceful degradation, and a tested rollback path. Preserve enough telemetry to distinguish application, dependency, and infrastructure failures.</div><div class="speak">Measure user-visible latency and errors first, then saturation, capacity, cost, and recovery time. Optimize only after identifying the binding constraint.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Aggregate request counts by tenant in one pass. Extend the example with empty, single-item, duplicate, and large-input test cases.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="stacks">
+    <div class="topic-head">
+      <h3>Stacks</h3>
+      <span class="badge med">Medium</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>A LIFO stack models nested structure, rollback order, and monotonic candidate sets.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Validate nested delimiters in a configuration expression. State the invariant first, then derive time and space complexity and test boundary cases.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="runner">
+        <pre class="code" data-code>const input = '([{}])';
+const pairs = { ')': '(', ']': '[', '}': '{' };
+const stack = [];
+let valid = true;
+for (const ch of input) {
+  if ('([{'.includes(ch)) stack.push(ch);
+  else if (stack.pop() !== pairs[ch]) { valid = false; break; }
+}
+console.log(valid &amp;&amp; stack.length === 0);</pre>
+        <div class="runner-toolbar">
+          <button type="button" class="btn btn-primary btn-sm" data-run>Run</button>
+          <span style="font-size:0.8rem;color:var(--muted)">Runs in-browser; console.log is captured</span>
+        </div>
+        <pre class="runner-out">true</pre>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Choosing a memorized pattern before proving its invariant.</li><li>Ignoring input scale, mutation, Unicode/numeric limits, or worst-case complexity.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Solve a backend-flavored stacks problem and explain the invariant.</li><li>How would input scale or streaming data change the solution?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">I would start with a correct baseline, identify repeated work, then select the data structure that preserves the required invariant.</div><div class="speak">For unbounded input I would avoid retaining the full dataset, use bounded state where possible, and define approximation or spill-to-disk behavior explicitly.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How would you operate Stacks safely during a partial outage?</li><li>Which metrics and trade-offs matter most for Stacks?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Prefer bounded retries, explicit timeouts, graceful degradation, and a tested rollback path. Preserve enough telemetry to distinguish application, dependency, and infrastructure failures.</div><div class="speak">Measure user-visible latency and errors first, then saturation, capacity, cost, and recovery time. Optimize only after identifying the binding constraint.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Validate nested delimiters in a configuration expression. Extend the example with empty, single-item, duplicate, and large-input test cases.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="queues">
+    <div class="topic-head">
+      <h3>Queues</h3>
+      <span class="badge med">Medium</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>FIFO ordering models work dispatch and breadth-first traversal; efficient implementations avoid Array.shift's repeated reindexing.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Drain a work queue using a head index. State the invariant first, then derive time and space complexity and test boundary cases.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="runner">
+        <pre class="code" data-code>const queue = ['job-1', 'job-2', 'job-3'];
+let head = 0;
+while (head &lt; queue.length) console.log('processing ' + queue[head++]);</pre>
+        <div class="runner-toolbar">
+          <button type="button" class="btn btn-primary btn-sm" data-run>Run</button>
+          <span style="font-size:0.8rem;color:var(--muted)">Runs in-browser; console.log is captured</span>
+        </div>
+        <pre class="runner-out">processing job-1
+processing job-2
+processing job-3</pre>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Choosing a memorized pattern before proving its invariant.</li><li>Ignoring input scale, mutation, Unicode/numeric limits, or worst-case complexity.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Solve a backend-flavored queues problem and explain the invariant.</li><li>How would input scale or streaming data change the solution?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">I would start with a correct baseline, identify repeated work, then select the data structure that preserves the required invariant.</div><div class="speak">For unbounded input I would avoid retaining the full dataset, use bounded state where possible, and define approximation or spill-to-disk behavior explicitly.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How would you operate Queues safely during a partial outage?</li><li>Which metrics and trade-offs matter most for Queues?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Prefer bounded retries, explicit timeouts, graceful degradation, and a tested rollback path. Preserve enough telemetry to distinguish application, dependency, and infrastructure failures.</div><div class="speak">Measure user-visible latency and errors first, then saturation, capacity, cost, and recovery time. Optimize only after identifying the binding constraint.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Drain a work queue using a head index. Extend the example with empty, single-item, duplicate, and large-input test cases.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="linked-lists">
+    <div class="topic-head">
+      <h3>Linked lists</h3>
+      <span class="badge med">Medium</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Linked nodes provide O(1) insertion/removal when a node is known and are commonly paired with a map for an LRU cache.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Move an accessed cache node to the front without scanning. State the invariant first, then derive time and space complexity and test boundary cases.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="runner">
+        <pre class="code" data-code>const a = { value: 'a' }, b = { value: 'b' }, c = { value: 'c' };
+a.next = b; b.next = c;
+let slow = a, fast = a;
+while (fast &amp;&amp; fast.next) { slow = slow.next; fast = fast.next.next; }
+console.log(slow.value);</pre>
+        <div class="runner-toolbar">
+          <button type="button" class="btn btn-primary btn-sm" data-run>Run</button>
+          <span style="font-size:0.8rem;color:var(--muted)">Runs in-browser; console.log is captured</span>
+        </div>
+        <pre class="runner-out">b</pre>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Choosing a memorized pattern before proving its invariant.</li><li>Ignoring input scale, mutation, Unicode/numeric limits, or worst-case complexity.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Solve a backend-flavored linked lists problem and explain the invariant.</li><li>How would input scale or streaming data change the solution?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">I would start with a correct baseline, identify repeated work, then select the data structure that preserves the required invariant.</div><div class="speak">For unbounded input I would avoid retaining the full dataset, use bounded state where possible, and define approximation or spill-to-disk behavior explicitly.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How would you operate Linked lists safely during a partial outage?</li><li>Which metrics and trade-offs matter most for Linked lists?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Prefer bounded retries, explicit timeouts, graceful degradation, and a tested rollback path. Preserve enough telemetry to distinguish application, dependency, and infrastructure failures.</div><div class="speak">Measure user-visible latency and errors first, then saturation, capacity, cost, and recovery time. Optimize only after identifying the binding constraint.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Move an accessed cache node to the front without scanning. Extend the example with empty, single-item, duplicate, and large-input test cases.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="trees">
+    <div class="topic-head">
+      <h3>Trees</h3>
+      <span class="badge med">Medium</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Trees represent hierarchy and ordered indexes. Traversal choice controls whether processing is depth-first, breadth-first, or sorted.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Compute the maximum depth of a routing tree. State the invariant first, then derive time and space complexity and test boundary cases.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="runner">
+        <pre class="code" data-code>const root = { name: '/', children: [{ name: 'api', children: [{ name: 'v1', children: [] }] }, { name: 'health', children: [] }] };
+function depth(node) { return 1 + Math.max(0, ...node.children.map(depth)); }
+console.log(depth(root));</pre>
+        <div class="runner-toolbar">
+          <button type="button" class="btn btn-primary btn-sm" data-run>Run</button>
+          <span style="font-size:0.8rem;color:var(--muted)">Runs in-browser; console.log is captured</span>
+        </div>
+        <pre class="runner-out">3</pre>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Choosing a memorized pattern before proving its invariant.</li><li>Ignoring input scale, mutation, Unicode/numeric limits, or worst-case complexity.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Solve a backend-flavored trees problem and explain the invariant.</li><li>How would input scale or streaming data change the solution?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">I would start with a correct baseline, identify repeated work, then select the data structure that preserves the required invariant.</div><div class="speak">For unbounded input I would avoid retaining the full dataset, use bounded state where possible, and define approximation or spill-to-disk behavior explicitly.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How would you operate Trees safely during a partial outage?</li><li>Which metrics and trade-offs matter most for Trees?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Prefer bounded retries, explicit timeouts, graceful degradation, and a tested rollback path. Preserve enough telemetry to distinguish application, dependency, and infrastructure failures.</div><div class="speak">Measure user-visible latency and errors first, then saturation, capacity, cost, and recovery time. Optimize only after identifying the binding constraint.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Compute the maximum depth of a routing tree. Extend the example with empty, single-item, duplicate, and large-input test cases.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="graphs">
+    <div class="topic-head">
+      <h3>Graphs</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Graphs model dependencies, services, and workflows. Adjacency lists are space-efficient; visited state prevents cycles.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Topologically order migration dependencies and detect a cycle. State the invariant first, then derive time and space complexity and test boundary cases.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="runner">
+        <pre class="code" data-code>const graph = new Map([['schema', ['seed']], ['seed', ['index']], ['index', []]]);
+const seen = new Set(), order = [];
+function visit(node) { if (seen.has(node)) return; seen.add(node); for (const next of graph.get(node)) visit(next); order.push(node); }
+visit('schema');
+console.log(order.reverse().join(' -&gt; '));</pre>
+        <div class="runner-toolbar">
+          <button type="button" class="btn btn-primary btn-sm" data-run>Run</button>
+          <span style="font-size:0.8rem;color:var(--muted)">Runs in-browser; console.log is captured</span>
+        </div>
+        <pre class="runner-out">schema -&gt; seed -&gt; index</pre>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Choosing a memorized pattern before proving its invariant.</li><li>Ignoring input scale, mutation, Unicode/numeric limits, or worst-case complexity.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Solve a backend-flavored graphs problem and explain the invariant.</li><li>How would input scale or streaming data change the solution?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">I would start with a correct baseline, identify repeated work, then select the data structure that preserves the required invariant.</div><div class="speak">For unbounded input I would avoid retaining the full dataset, use bounded state where possible, and define approximation or spill-to-disk behavior explicitly.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How would you operate Graphs safely during a partial outage?</li><li>Which metrics and trade-offs matter most for Graphs?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Prefer bounded retries, explicit timeouts, graceful degradation, and a tested rollback path. Preserve enough telemetry to distinguish application, dependency, and infrastructure failures.</div><div class="speak">Measure user-visible latency and errors first, then saturation, capacity, cost, and recovery time. Optimize only after identifying the binding constraint.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Topologically order migration dependencies and detect a cycle. Extend the example with empty, single-item, duplicate, and large-input test cases.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="recursion">
+    <div class="topic-head">
+      <h3>Recursion</h3>
+      <span class="badge med">Medium</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Recursion decomposes a problem into smaller instances but consumes call stack; iterative traversal is safer for unbounded user-controlled depth.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Flatten a bounded nested configuration object. State the invariant first, then derive time and space complexity and test boundary cases.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="runner">
+        <pre class="code" data-code>function flatten(value, prefix = '', out = {}) {
+  for (const [key, item] of Object.entries(value)) {
+    const path = prefix ? prefix + '.' + key : key;
+    if (item &amp;&amp; typeof item === 'object') flatten(item, path, out); else out[path] = item;
+  }
+  return out;
+}
+console.log(JSON.stringify(flatten({ db: { host: 'localhost', port: 5432 } })));</pre>
+        <div class="runner-toolbar">
+          <button type="button" class="btn btn-primary btn-sm" data-run>Run</button>
+          <span style="font-size:0.8rem;color:var(--muted)">Runs in-browser; console.log is captured</span>
+        </div>
+        <pre class="runner-out">{&quot;db.host&quot;:&quot;localhost&quot;,&quot;db.port&quot;:5432}</pre>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Choosing a memorized pattern before proving its invariant.</li><li>Ignoring input scale, mutation, Unicode/numeric limits, or worst-case complexity.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Solve a backend-flavored recursion problem and explain the invariant.</li><li>How would input scale or streaming data change the solution?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">I would start with a correct baseline, identify repeated work, then select the data structure that preserves the required invariant.</div><div class="speak">For unbounded input I would avoid retaining the full dataset, use bounded state where possible, and define approximation or spill-to-disk behavior explicitly.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How would you operate Recursion safely during a partial outage?</li><li>Which metrics and trade-offs matter most for Recursion?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Prefer bounded retries, explicit timeouts, graceful degradation, and a tested rollback path. Preserve enough telemetry to distinguish application, dependency, and infrastructure failures.</div><div class="speak">Measure user-visible latency and errors first, then saturation, capacity, cost, and recovery time. Optimize only after identifying the binding constraint.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Flatten a bounded nested configuration object. Extend the example with empty, single-item, duplicate, and large-input test cases.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="sorting">
+    <div class="topic-head">
+      <h3>Sorting</h3>
+      <span class="badge med">Medium</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Comparison sorting is generally O(n log n); stable ordering and comparator correctness matter for pagination and deterministic output.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Sort jobs by priority then creation sequence. State the invariant first, then derive time and space complexity and test boundary cases.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="runner">
+        <pre class="code" data-code>const jobs = [{ id: 'b', p: 1, seq: 2 }, { id: 'a', p: 2, seq: 1 }, { id: 'c', p: 1, seq: 1 }];
+jobs.sort((x, y) =&gt; y.p - x.p || x.seq - y.seq);
+console.log(jobs.map(x =&gt; x.id).join(','));</pre>
+        <div class="runner-toolbar">
+          <button type="button" class="btn btn-primary btn-sm" data-run>Run</button>
+          <span style="font-size:0.8rem;color:var(--muted)">Runs in-browser; console.log is captured</span>
+        </div>
+        <pre class="runner-out">a,c,b</pre>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Choosing a memorized pattern before proving its invariant.</li><li>Ignoring input scale, mutation, Unicode/numeric limits, or worst-case complexity.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Solve a backend-flavored sorting problem and explain the invariant.</li><li>How would input scale or streaming data change the solution?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">I would start with a correct baseline, identify repeated work, then select the data structure that preserves the required invariant.</div><div class="speak">For unbounded input I would avoid retaining the full dataset, use bounded state where possible, and define approximation or spill-to-disk behavior explicitly.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How would you operate Sorting safely during a partial outage?</li><li>Which metrics and trade-offs matter most for Sorting?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Prefer bounded retries, explicit timeouts, graceful degradation, and a tested rollback path. Preserve enough telemetry to distinguish application, dependency, and infrastructure failures.</div><div class="speak">Measure user-visible latency and errors first, then saturation, capacity, cost, and recovery time. Optimize only after identifying the binding constraint.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Sort jobs by priority then creation sequence. Extend the example with empty, single-item, duplicate, and large-input test cases.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="searching">
+    <div class="topic-head">
+      <h3>Searching</h3>
+      <span class="badge med">Medium</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Search strategy follows structure: linear scan for unsorted data, indexed lookup for keys, and graph traversal for relationships.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Use BFS to find the shortest service dependency path. State the invariant first, then derive time and space complexity and test boundary cases.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="runner">
+        <pre class="code" data-code>const graph = { api: ['auth', 'orders'], orders: ['db'], auth: ['db'], db: [] };
+const q = [['api']], seen = new Set(['api']);
+while (q.length) { const path = q.shift(), node = path.at(-1); if (node === 'db') { console.log(path.join(' -&gt; ')); break; } for (const n of graph[node]) if (!seen.has(n)) { seen.add(n); q.push([...path, n]); } }</pre>
+        <div class="runner-toolbar">
+          <button type="button" class="btn btn-primary btn-sm" data-run>Run</button>
+          <span style="font-size:0.8rem;color:var(--muted)">Runs in-browser; console.log is captured</span>
+        </div>
+        <pre class="runner-out">api -&gt; auth -&gt; db</pre>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Choosing a memorized pattern before proving its invariant.</li><li>Ignoring input scale, mutation, Unicode/numeric limits, or worst-case complexity.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Solve a backend-flavored searching problem and explain the invariant.</li><li>How would input scale or streaming data change the solution?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">I would start with a correct baseline, identify repeated work, then select the data structure that preserves the required invariant.</div><div class="speak">For unbounded input I would avoid retaining the full dataset, use bounded state where possible, and define approximation or spill-to-disk behavior explicitly.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How would you operate Searching safely during a partial outage?</li><li>Which metrics and trade-offs matter most for Searching?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Prefer bounded retries, explicit timeouts, graceful degradation, and a tested rollback path. Preserve enough telemetry to distinguish application, dependency, and infrastructure failures.</div><div class="speak">Measure user-visible latency and errors first, then saturation, capacity, cost, and recovery time. Optimize only after identifying the binding constraint.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Use BFS to find the shortest service dependency path. Extend the example with empty, single-item, duplicate, and large-input test cases.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="sliding-window">
+    <div class="topic-head">
+      <h3>Sliding window</h3>
+      <span class="badge med">Medium</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>A window maintains an aggregate over a contiguous range, reducing repeated work from O(nk) to O(n).</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Find the maximum requests observed in any three consecutive buckets. State the invariant first, then derive time and space complexity and test boundary cases.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="runner">
+        <pre class="code" data-code>const buckets = [2, 8, 1, 5, 7, 3];
+const k = 3;
+let sum = buckets.slice(0, k).reduce((a, b) =&gt; a + b, 0), best = sum;
+for (let i = k; i &lt; buckets.length; i++) { sum += buckets[i] - buckets[i - k]; best = Math.max(best, sum); }
+console.log(best);</pre>
+        <div class="runner-toolbar">
+          <button type="button" class="btn btn-primary btn-sm" data-run>Run</button>
+          <span style="font-size:0.8rem;color:var(--muted)">Runs in-browser; console.log is captured</span>
+        </div>
+        <pre class="runner-out">15</pre>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Choosing a memorized pattern before proving its invariant.</li><li>Ignoring input scale, mutation, Unicode/numeric limits, or worst-case complexity.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Solve a backend-flavored sliding window problem and explain the invariant.</li><li>How would input scale or streaming data change the solution?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">I would start with a correct baseline, identify repeated work, then select the data structure that preserves the required invariant.</div><div class="speak">For unbounded input I would avoid retaining the full dataset, use bounded state where possible, and define approximation or spill-to-disk behavior explicitly.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How would you operate Sliding window safely during a partial outage?</li><li>Which metrics and trade-offs matter most for Sliding window?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Prefer bounded retries, explicit timeouts, graceful degradation, and a tested rollback path. Preserve enough telemetry to distinguish application, dependency, and infrastructure failures.</div><div class="speak">Measure user-visible latency and errors first, then saturation, capacity, cost, and recovery time. Optimize only after identifying the binding constraint.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Find the maximum requests observed in any three consecutive buckets. Extend the example with empty, single-item, duplicate, and large-input test cases.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="two-pointers">
+    <div class="topic-head">
+      <h3>Two pointers</h3>
+      <span class="badge med">Medium</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Two indices moving under a monotonic condition can replace a nested search in sorted or partitioned data.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Find two sorted latency samples whose sum hits a budget. State the invariant first, then derive time and space complexity and test boundary cases.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="runner">
+        <pre class="code" data-code>const values = [10, 20, 35, 50, 75];
+const target = 85;
+let left = 0, right = values.length - 1;
+while (left &lt; right) { const sum = values[left] + values[right]; if (sum === target) break; sum &lt; target ? left++ : right--; }
+console.log(values[left] + ',' + values[right]);</pre>
+        <div class="runner-toolbar">
+          <button type="button" class="btn btn-primary btn-sm" data-run>Run</button>
+          <span style="font-size:0.8rem;color:var(--muted)">Runs in-browser; console.log is captured</span>
+        </div>
+        <pre class="runner-out">10,75</pre>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Choosing a memorized pattern before proving its invariant.</li><li>Ignoring input scale, mutation, Unicode/numeric limits, or worst-case complexity.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Solve a backend-flavored two pointers problem and explain the invariant.</li><li>How would input scale or streaming data change the solution?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">I would start with a correct baseline, identify repeated work, then select the data structure that preserves the required invariant.</div><div class="speak">For unbounded input I would avoid retaining the full dataset, use bounded state where possible, and define approximation or spill-to-disk behavior explicitly.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How would you operate Two pointers safely during a partial outage?</li><li>Which metrics and trade-offs matter most for Two pointers?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Prefer bounded retries, explicit timeouts, graceful degradation, and a tested rollback path. Preserve enough telemetry to distinguish application, dependency, and infrastructure failures.</div><div class="speak">Measure user-visible latency and errors first, then saturation, capacity, cost, and recovery time. Optimize only after identifying the binding constraint.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Find two sorted latency samples whose sum hits a budget. Extend the example with empty, single-item, duplicate, and large-input test cases.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="binary-search">
+    <div class="topic-head">
+      <h3>Binary search</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Binary search halves an ordered search space and also finds the first feasible answer when a predicate is monotonic.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Find the minimum worker capacity that can process jobs within three batches. State the invariant first, then derive time and space complexity and test boundary cases.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="runner">
+        <pre class="code" data-code>const jobs = [7, 2, 5, 10, 8], batches = 3;
+function fits(cap) { let used = 1, load = 0; for (const job of jobs) { if (load + job &gt; cap) { used++; load = 0; } load += job; } return used &lt;= batches; }
+let lo = Math.max(...jobs), hi = jobs.reduce((a, b) =&gt; a + b, 0);
+while (lo &lt; hi) { const mid = Math.floor((lo + hi) / 2); fits(mid) ? hi = mid : lo = mid + 1; }
+console.log(lo);</pre>
+        <div class="runner-toolbar">
+          <button type="button" class="btn btn-primary btn-sm" data-run>Run</button>
+          <span style="font-size:0.8rem;color:var(--muted)">Runs in-browser; console.log is captured</span>
+        </div>
+        <pre class="runner-out">14</pre>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Choosing a memorized pattern before proving its invariant.</li><li>Ignoring input scale, mutation, Unicode/numeric limits, or worst-case complexity.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Solve a backend-flavored binary search problem and explain the invariant.</li><li>How would input scale or streaming data change the solution?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">I would start with a correct baseline, identify repeated work, then select the data structure that preserves the required invariant.</div><div class="speak">For unbounded input I would avoid retaining the full dataset, use bounded state where possible, and define approximation or spill-to-disk behavior explicitly.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How would you operate Binary search safely during a partial outage?</li><li>Which metrics and trade-offs matter most for Binary search?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Prefer bounded retries, explicit timeouts, graceful degradation, and a tested rollback path. Preserve enough telemetry to distinguish application, dependency, and infrastructure failures.</div><div class="speak">Measure user-visible latency and errors first, then saturation, capacity, cost, and recovery time. Optimize only after identifying the binding constraint.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Find the minimum worker capacity that can process jobs within three batches. Extend the example with empty, single-item, duplicate, and large-input test cases.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="dynamic-programming">
+    <div class="topic-head">
+      <h3>Dynamic programming</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Dynamic programming caches overlapping subproblems. State definition, transition, base case, and iteration order are more important than memorizing templates.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Find minimum retry cost to reach a target using allowed operation costs. State the invariant first, then derive time and space complexity and test boundary cases.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="runner">
+        <pre class="code" data-code>const cost = [10, 15, 20, 5];
+let prev2 = 0, prev1 = 0;
+for (const current of cost) { const next = current + Math.min(prev1, prev2); prev2 = prev1; prev1 = next; }
+console.log(Math.min(prev1, prev2));</pre>
+        <div class="runner-toolbar">
+          <button type="button" class="btn btn-primary btn-sm" data-run>Run</button>
+          <span style="font-size:0.8rem;color:var(--muted)">Runs in-browser; console.log is captured</span>
+        </div>
+        <pre class="runner-out">20</pre>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Choosing a memorized pattern before proving its invariant.</li><li>Ignoring input scale, mutation, Unicode/numeric limits, or worst-case complexity.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Solve a backend-flavored dynamic programming problem and explain the invariant.</li><li>How would input scale or streaming data change the solution?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">I would start with a correct baseline, identify repeated work, then select the data structure that preserves the required invariant.</div><div class="speak">For unbounded input I would avoid retaining the full dataset, use bounded state where possible, and define approximation or spill-to-disk behavior explicitly.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How would you operate Dynamic programming safely during a partial outage?</li><li>Which metrics and trade-offs matter most for Dynamic programming?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Prefer bounded retries, explicit timeouts, graceful degradation, and a tested rollback path. Preserve enough telemetry to distinguish application, dependency, and infrastructure failures.</div><div class="speak">Measure user-visible latency and errors first, then saturation, capacity, cost, and recovery time. Optimize only after identifying the binding constraint.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Find minimum retry cost to reach a target using allowed operation costs. Extend the example with empty, single-item, duplicate, and large-input test cases.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="implement-debounce">
+    <div class="topic-head">
+      <h3>Implement debounce</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Debounce delays execution until calls have stopped for a period; useful for coalescing bursts, not for guaranteed durable work.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>A senior implementation defines behavior at boundary cases, analyzes complexity, and makes cancellation, errors, ordering, and resource ownership explicit.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="runner">
+        <pre class="code" data-code>function debounce(fn, wait) {
+  let timer;
+  return function (...args) {
+    clearTimeout(timer);
+    timer = setTimeout(() =&gt; fn.apply(this, args), wait);
+  };
+}
+return new Promise(resolve =&gt; {
+  const save = debounce(value =&gt; { console.log(value); resolve(); }, 20);
+  save('draft-1'); save('draft-2'); save('final');
+});</pre>
+        <div class="runner-toolbar">
+          <button type="button" class="btn btn-primary btn-sm" data-run>Run</button>
+          <span style="font-size:0.8rem;color:var(--muted)">Runs in-browser; console.log is captured</span>
+        </div>
+        <pre class="runner-out">final</pre>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Implementing only the happy path shown in a familiar snippet.</li><li>Leaving timing, errors, cleanup, ordering, or memory growth unspecified.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Implement debounce and narrate the invariants.</li><li>Which production requirements would change this implementation?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">I would first define the observable contract and edge cases, then implement the smallest state machine that preserves that contract.</div><div class="speak">Distributed state, cancellation, persistence, fairness, and observability usually turn the interview utility into a different production component.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How would you operate Implement debounce safely during a partial outage?</li><li>Which metrics and trade-offs matter most for Implement debounce?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Prefer bounded retries, explicit timeouts, graceful degradation, and a tested rollback path. Preserve enough telemetry to distinguish application, dependency, and infrastructure failures.</div><div class="speak">Measure user-visible latency and errors first, then saturation, capacity, cost, and recovery time. Optimize only after identifying the binding constraint.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Add focused tests for debounce, including errors, empty input, cleanup, and concurrent or timing-sensitive behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="implement-throttle">
+    <div class="topic-head">
+      <h3>Implement throttle</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Throttle permits at most one execution per interval. Leading/trailing semantics must be explicit.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>A senior implementation defines behavior at boundary cases, analyzes complexity, and makes cancellation, errors, ordering, and resource ownership explicit.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="runner">
+        <pre class="code" data-code>function throttle(fn, wait) {
+  let last = -Infinity;
+  return function (...args) {
+    const now = Date.now();
+    if (now - last &gt;= wait) { last = now; return fn.apply(this, args); }
+  };
+}
+const emit = throttle(value =&gt; console.log(value), 1000);
+emit('accepted'); emit('dropped');</pre>
+        <div class="runner-toolbar">
+          <button type="button" class="btn btn-primary btn-sm" data-run>Run</button>
+          <span style="font-size:0.8rem;color:var(--muted)">Runs in-browser; console.log is captured</span>
+        </div>
+        <pre class="runner-out">accepted</pre>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Implementing only the happy path shown in a familiar snippet.</li><li>Leaving timing, errors, cleanup, ordering, or memory growth unspecified.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Implement throttle and narrate the invariants.</li><li>Which production requirements would change this implementation?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">I would first define the observable contract and edge cases, then implement the smallest state machine that preserves that contract.</div><div class="speak">Distributed state, cancellation, persistence, fairness, and observability usually turn the interview utility into a different production component.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How would you operate Implement throttle safely during a partial outage?</li><li>Which metrics and trade-offs matter most for Implement throttle?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Prefer bounded retries, explicit timeouts, graceful degradation, and a tested rollback path. Preserve enough telemetry to distinguish application, dependency, and infrastructure failures.</div><div class="speak">Measure user-visible latency and errors first, then saturation, capacity, cost, and recovery time. Optimize only after identifying the binding constraint.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Add focused tests for throttle, including errors, empty input, cleanup, and concurrent or timing-sensitive behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="implement-retry">
+    <div class="topic-head">
+      <h3>Implement retry</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Retry only transient failures, with bounded attempts, backoff, jitter, timeout, and cancellation; preserve idempotency.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>A senior implementation defines behavior at boundary cases, analyzes complexity, and makes cancellation, errors, ordering, and resource ownership explicit.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="runner">
+        <pre class="code" data-code>async function retry(fn, { attempts = 3, delayMs = 10 } = {}) {
+  let error;
+  for (let i = 0; i &lt; attempts; i++) {
+    try { return await fn(i); } catch (e) { error = e; if (i + 1 &lt; attempts) await new Promise(r =&gt; setTimeout(r, delayMs * 2 ** i)); }
+  }
+  throw error;
+}
+let calls = 0;
+return retry(() =&gt; ++calls &lt; 3 ? Promise.reject(new Error('temporary')) : Promise.resolve('ok')).then(value =&gt; console.log(value + ' after ' + calls));</pre>
+        <div class="runner-toolbar">
+          <button type="button" class="btn btn-primary btn-sm" data-run>Run</button>
+          <span style="font-size:0.8rem;color:var(--muted)">Runs in-browser; console.log is captured</span>
+        </div>
+        <pre class="runner-out">ok after 3</pre>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Implementing only the happy path shown in a familiar snippet.</li><li>Leaving timing, errors, cleanup, ordering, or memory growth unspecified.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Implement retry and narrate the invariants.</li><li>Which production requirements would change this implementation?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">I would first define the observable contract and edge cases, then implement the smallest state machine that preserves that contract.</div><div class="speak">Distributed state, cancellation, persistence, fairness, and observability usually turn the interview utility into a different production component.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How would you operate Implement retry safely during a partial outage?</li><li>Which metrics and trade-offs matter most for Implement retry?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Prefer bounded retries, explicit timeouts, graceful degradation, and a tested rollback path. Preserve enough telemetry to distinguish application, dependency, and infrastructure failures.</div><div class="speak">Measure user-visible latency and errors first, then saturation, capacity, cost, and recovery time. Optimize only after identifying the binding constraint.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Add focused tests for retry, including errors, empty input, cleanup, and concurrent or timing-sensitive behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="implement-concurrency-limiter">
+    <div class="topic-head">
+      <h3>Implement concurrency limiter</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>A limiter bounds in-flight asynchronous work, protecting memory and downstream capacity while preserving queued jobs.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>A senior implementation defines behavior at boundary cases, analyzes complexity, and makes cancellation, errors, ordering, and resource ownership explicit.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="runner">
+        <pre class="code" data-code>function createLimiter(limit) {
+  let active = 0; const queue = [];
+  const drain = () =&gt; {
+    while (active &lt; limit &amp;&amp; queue.length) {
+      active++; const { task, resolve, reject } = queue.shift();
+      Promise.resolve().then(task).then(resolve, reject).finally(() =&gt; { active--; drain(); });
+    }
+  };
+  return task =&gt; new Promise((resolve, reject) =&gt; { queue.push({ task, resolve, reject }); drain(); });
+}
+const limit = createLimiter(2);
+return Promise.all([1, 2, 3, 4].map(n =&gt; limit(async () =&gt; n * n))).then(x =&gt; console.log(x.join(',')));</pre>
+        <div class="runner-toolbar">
+          <button type="button" class="btn btn-primary btn-sm" data-run>Run</button>
+          <span style="font-size:0.8rem;color:var(--muted)">Runs in-browser; console.log is captured</span>
+        </div>
+        <pre class="runner-out">1,4,9,16</pre>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Implementing only the happy path shown in a familiar snippet.</li><li>Leaving timing, errors, cleanup, ordering, or memory growth unspecified.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Implement concurrency limiter and narrate the invariants.</li><li>Which production requirements would change this implementation?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">I would first define the observable contract and edge cases, then implement the smallest state machine that preserves that contract.</div><div class="speak">Distributed state, cancellation, persistence, fairness, and observability usually turn the interview utility into a different production component.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How would you operate Implement concurrency limiter safely during a partial outage?</li><li>Which metrics and trade-offs matter most for Implement concurrency limiter?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Prefer bounded retries, explicit timeouts, graceful degradation, and a tested rollback path. Preserve enough telemetry to distinguish application, dependency, and infrastructure failures.</div><div class="speak">Measure user-visible latency and errors first, then saturation, capacity, cost, and recovery time. Optimize only after identifying the binding constraint.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Add focused tests for concurrency limiter, including errors, empty input, cleanup, and concurrent or timing-sensitive behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="implement-promise-all">
+    <div class="topic-head">
+      <h3>Implement Promise.all</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Promise.all preserves input order, resolves after all values, and rejects on the first observed rejection while remaining work continues.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>A senior implementation defines behavior at boundary cases, analyzes complexity, and makes cancellation, errors, ordering, and resource ownership explicit.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="runner">
+        <pre class="code" data-code>function promiseAll(values) {
+  return new Promise((resolve, reject) =&gt; {
+    const items = Array.from(values), results = new Array(items.length);
+    if (items.length === 0) return resolve([]);
+    let remaining = items.length;
+    items.forEach((value, i) =&gt; Promise.resolve(value).then(result =&gt; {
+      results[i] = result;
+      if (--remaining === 0) resolve(results);
+    }, reject));
+  });
+}
+return promiseAll([Promise.resolve('a'), 'b', new Promise(r =&gt; setTimeout(() =&gt; r('c'), 10))]).then(x =&gt; console.log(x.join(',')));</pre>
+        <div class="runner-toolbar">
+          <button type="button" class="btn btn-primary btn-sm" data-run>Run</button>
+          <span style="font-size:0.8rem;color:var(--muted)">Runs in-browser; console.log is captured</span>
+        </div>
+        <pre class="runner-out">a,b,c</pre>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Implementing only the happy path shown in a familiar snippet.</li><li>Leaving timing, errors, cleanup, ordering, or memory growth unspecified.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Implement Promise.all and narrate the invariants.</li><li>Which production requirements would change this implementation?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">I would first define the observable contract and edge cases, then implement the smallest state machine that preserves that contract.</div><div class="speak">Distributed state, cancellation, persistence, fairness, and observability usually turn the interview utility into a different production component.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How would you operate Implement Promise.all safely during a partial outage?</li><li>Which metrics and trade-offs matter most for Implement Promise.all?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Prefer bounded retries, explicit timeouts, graceful degradation, and a tested rollback path. Preserve enough telemetry to distinguish application, dependency, and infrastructure failures.</div><div class="speak">Measure user-visible latency and errors first, then saturation, capacity, cost, and recovery time. Optimize only after identifying the binding constraint.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Add focused tests for promise.all, including errors, empty input, cleanup, and concurrent or timing-sensitive behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="implement-cache">
+    <div class="topic-head">
+      <h3>Implement cache</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>A cache trades freshness and memory for latency and dependency load. TTL, capacity, key correctness, stampede protection, and invalidation are core semantics.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>A senior implementation defines behavior at boundary cases, analyzes complexity, and makes cancellation, errors, ordering, and resource ownership explicit.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="runner">
+        <pre class="code" data-code>function createCache(ttlMs) {
+  const data = new Map();
+  return {
+    set(key, value) { data.set(key, { value, expires: Date.now() + ttlMs }); },
+    get(key) { const item = data.get(key); if (!item || item.expires &lt;= Date.now()) { data.delete(key); return undefined; } return item.value; },
+    delete(key) { return data.delete(key); }
+  };
+}
+const cache = createCache(1000); cache.set('user:1', { name: 'Ayan' }); console.log(cache.get('user:1').name);</pre>
+        <div class="runner-toolbar">
+          <button type="button" class="btn btn-primary btn-sm" data-run>Run</button>
+          <span style="font-size:0.8rem;color:var(--muted)">Runs in-browser; console.log is captured</span>
+        </div>
+        <pre class="runner-out">Ayan</pre>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Implementing only the happy path shown in a familiar snippet.</li><li>Leaving timing, errors, cleanup, ordering, or memory growth unspecified.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Implement cache and narrate the invariants.</li><li>Which production requirements would change this implementation?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">I would first define the observable contract and edge cases, then implement the smallest state machine that preserves that contract.</div><div class="speak">Distributed state, cancellation, persistence, fairness, and observability usually turn the interview utility into a different production component.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How would you operate Implement cache safely during a partial outage?</li><li>Which metrics and trade-offs matter most for Implement cache?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Prefer bounded retries, explicit timeouts, graceful degradation, and a tested rollback path. Preserve enough telemetry to distinguish application, dependency, and infrastructure failures.</div><div class="speak">Measure user-visible latency and errors first, then saturation, capacity, cost, and recovery time. Optimize only after identifying the binding constraint.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Add focused tests for cache, including errors, empty input, cleanup, and concurrent or timing-sensitive behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="implement-event-emitter">
+    <div class="topic-head">
+      <h3>Implement event emitter</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>An event emitter decouples in-process publishers and subscribers. Listener lifecycle, errors, ordering, and reentrancy need defined behavior.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>A senior implementation defines behavior at boundary cases, analyzes complexity, and makes cancellation, errors, ordering, and resource ownership explicit.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="runner">
+        <pre class="code" data-code>class EventEmitter {
+  #events = new Map();
+  on(name, fn) { const set = this.#events.get(name) || new Set(); set.add(fn); this.#events.set(name, set); return () =&gt; this.off(name, fn); }
+  off(name, fn) { this.#events.get(name)?.delete(fn); }
+  emit(name, ...args) { for (const fn of [...(this.#events.get(name) || [])]) fn(...args); }
+}
+const bus = new EventEmitter(); const unsubscribe = bus.on('order.created', id =&gt; console.log(id)); bus.emit('order.created', 'o-1'); unsubscribe();</pre>
+        <div class="runner-toolbar">
+          <button type="button" class="btn btn-primary btn-sm" data-run>Run</button>
+          <span style="font-size:0.8rem;color:var(--muted)">Runs in-browser; console.log is captured</span>
+        </div>
+        <pre class="runner-out">o-1</pre>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Implementing only the happy path shown in a familiar snippet.</li><li>Leaving timing, errors, cleanup, ordering, or memory growth unspecified.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Implement event emitter and narrate the invariants.</li><li>Which production requirements would change this implementation?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">I would first define the observable contract and edge cases, then implement the smallest state machine that preserves that contract.</div><div class="speak">Distributed state, cancellation, persistence, fairness, and observability usually turn the interview utility into a different production component.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How would you operate Implement event emitter safely during a partial outage?</li><li>Which metrics and trade-offs matter most for Implement event emitter?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Prefer bounded retries, explicit timeouts, graceful degradation, and a tested rollback path. Preserve enough telemetry to distinguish application, dependency, and infrastructure failures.</div><div class="speak">Measure user-visible latency and errors first, then saturation, capacity, cost, and recovery time. Optimize only after identifying the binding constraint.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Add focused tests for event emitter, including errors, empty input, cleanup, and concurrent or timing-sensitive behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="implement-rate-limiter">
+    <div class="topic-head">
+      <h3>Implement rate limiter</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>A token bucket allows bursts up to capacity and refills at a steady rate. Distributed enforcement requires atomic shared state and a policy for clock and partition behavior.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>A senior implementation defines behavior at boundary cases, analyzes complexity, and makes cancellation, errors, ordering, and resource ownership explicit.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="runner">
+        <pre class="code" data-code>function tokenBucket({ capacity, refillPerSecond }) {
+  let tokens = capacity, updated = Date.now();
+  return () =&gt; {
+    const now = Date.now();
+    tokens = Math.min(capacity, tokens + (now - updated) / 1000 * refillPerSecond); updated = now;
+    if (tokens &lt; 1) return false;
+    tokens -= 1; return true;
+  };
+}
+const allow = tokenBucket({ capacity: 2, refillPerSecond: 1 });
+console.log([allow(), allow(), allow()].join(','));</pre>
+        <div class="runner-toolbar">
+          <button type="button" class="btn btn-primary btn-sm" data-run>Run</button>
+          <span style="font-size:0.8rem;color:var(--muted)">Runs in-browser; console.log is captured</span>
+        </div>
+        <pre class="runner-out">true,true,false</pre>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Implementing only the happy path shown in a familiar snippet.</li><li>Leaving timing, errors, cleanup, ordering, or memory growth unspecified.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Implement rate limiter and narrate the invariants.</li><li>Which production requirements would change this implementation?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">I would first define the observable contract and edge cases, then implement the smallest state machine that preserves that contract.</div><div class="speak">Distributed state, cancellation, persistence, fairness, and observability usually turn the interview utility into a different production component.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How would you operate Implement rate limiter safely during a partial outage?</li><li>Which metrics and trade-offs matter most for Implement rate limiter?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Prefer bounded retries, explicit timeouts, graceful degradation, and a tested rollback path. Preserve enough telemetry to distinguish application, dependency, and infrastructure failures.</div><div class="speak">Measure user-visible latency and errors first, then saturation, capacity, cost, and recovery time. Optimize only after identifying the binding constraint.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Add focused tests for rate limiter, including errors, empty input, cleanup, and concurrent or timing-sensitive behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="implement-queue">
+    <div class="topic-head">
+      <h3>Implement queue</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>A queue should provide amortized O(1) enqueue/dequeue without Array.shift. Production queues additionally need durability, acknowledgement, visibility timeout, and dead-letter handling.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>A senior implementation defines behavior at boundary cases, analyzes complexity, and makes cancellation, errors, ordering, and resource ownership explicit.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="runner">
+        <pre class="code" data-code>class Queue {
+  #items = []; #head = 0;
+  enqueue(value) { this.#items.push(value); }
+  dequeue() { if (this.#head &gt;= this.#items.length) return undefined; const value = this.#items[this.#head++]; if (this.#head &gt; 64 &amp;&amp; this.#head * 2 &gt; this.#items.length) { this.#items = this.#items.slice(this.#head); this.#head = 0; } return value; }
+  get size() { return this.#items.length - this.#head; }
+}
+const q = new Queue(); q.enqueue('a'); q.enqueue('b'); console.log(q.dequeue() + ',' + q.dequeue() + ',' + q.size);</pre>
+        <div class="runner-toolbar">
+          <button type="button" class="btn btn-primary btn-sm" data-run>Run</button>
+          <span style="font-size:0.8rem;color:var(--muted)">Runs in-browser; console.log is captured</span>
+        </div>
+        <pre class="runner-out">a,b,0</pre>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Implementing only the happy path shown in a familiar snippet.</li><li>Leaving timing, errors, cleanup, ordering, or memory growth unspecified.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Implement queue and narrate the invariants.</li><li>Which production requirements would change this implementation?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">I would first define the observable contract and edge cases, then implement the smallest state machine that preserves that contract.</div><div class="speak">Distributed state, cancellation, persistence, fairness, and observability usually turn the interview utility into a different production component.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How would you operate Implement queue safely during a partial outage?</li><li>Which metrics and trade-offs matter most for Implement queue?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Prefer bounded retries, explicit timeouts, graceful degradation, and a tested rollback path. Preserve enough telemetry to distinguish application, dependency, and infrastructure failures.</div><div class="speak">Measure user-visible latency and errors first, then saturation, capacity, cost, and recovery time. Optimize only after identifying the binding constraint.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Add focused tests for queue, including errors, empty input, cleanup, and concurrent or timing-sensitive behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="implement-deep-clone">
+    <div class="topic-head">
+      <h3>Implement deep clone</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Deep cloning is type- and policy-dependent. structuredClone handles cycles and many built-ins but not functions or every host object; JSON serialization is not a general clone.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>A senior implementation defines behavior at boundary cases, analyzes complexity, and makes cancellation, errors, ordering, and resource ownership explicit.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="runner">
+        <pre class="code" data-code>const source = { date: new Date('2026-01-01T00:00:00Z'), map: new Map([['x', 1]]) };
+source.self = source;
+const copy = structuredClone(source);
+console.log(copy !== source, copy.self === copy, copy.date instanceof Date, copy.map.get('x'));</pre>
+        <div class="runner-toolbar">
+          <button type="button" class="btn btn-primary btn-sm" data-run>Run</button>
+          <span style="font-size:0.8rem;color:var(--muted)">Runs in-browser; console.log is captured</span>
+        </div>
+        <pre class="runner-out">true true true 1</pre>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Implementing only the happy path shown in a familiar snippet.</li><li>Leaving timing, errors, cleanup, ordering, or memory growth unspecified.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Implement deep clone and narrate the invariants.</li><li>Which production requirements would change this implementation?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">I would first define the observable contract and edge cases, then implement the smallest state machine that preserves that contract.</div><div class="speak">Distributed state, cancellation, persistence, fairness, and observability usually turn the interview utility into a different production component.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How would you operate Implement deep clone safely during a partial outage?</li><li>Which metrics and trade-offs matter most for Implement deep clone?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Prefer bounded retries, explicit timeouts, graceful degradation, and a tested rollback path. Preserve enough telemetry to distinguish application, dependency, and infrastructure failures.</div><div class="speak">Measure user-visible latency and errors first, then saturation, capacity, cost, and recovery time. Optimize only after identifying the binding constraint.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Add focused tests for deep clone, including errors, empty input, cleanup, and concurrent or timing-sensitive behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+          
+          
+          <div class="phase-nav"><a class="btn btn-ghost" href="14-testing.html">← Phase 14 · Testing</a><a class="btn btn-primary" href="16-projects.html">Phase 16 · Projects →</a></div>
+        </div>
+      </div>
+      <footer class="fine">Phase 15 · Node.js / TypeScript interview preparation</footer>
+    </main>
+  </div>
+  <script src="../assets/prep.js"></script>
+</body>
+</html>

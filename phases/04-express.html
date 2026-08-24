@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Express &amp; API Architecture — Node.js Interview Prep</title>
+  <link rel="stylesheet" href="../assets/prep.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" />
+</head>
+<body data-page="phase" data-phase="04">
+  <div class="app">
+    <nav class="sidebar">
+      <h1>Node.js Interview Prep</h1>
+      <p class="tag">5-year · Backend / Full-stack · Senior track</p>
+      <a class="nav-link" href="../nodejs-interview-preparation.html">← Hub</a>
+      <div class="nav-group">Phases</div>
+      <div id="phase-links">
+        <a class="nav-link" href="01-javascript.html">01 JavaScript</a>
+        <a class="nav-link" href="02-nodejs.html">02 Node.js</a>
+        <a class="nav-link" href="03-typescript.html">03 TypeScript</a>
+        <a class="nav-link" href="04-express.html">04 Express</a>
+        <a class="nav-link" href="05-rest.html">05 REST APIs</a>
+        <a class="nav-link" href="06-databases.html">06 Databases</a>
+        <a class="nav-link" href="07-redis.html">07 Redis</a>
+        <a class="nav-link" href="08-auth-security.html">08 Auth &amp; Security</a>
+        <a class="nav-link" href="09-microservices.html">09 Microservices</a>
+        <a class="nav-link" href="10-queues.html">10 Queues</a>
+        <a class="nav-link" href="11-system-design.html">11 System Design</a>
+        <a class="nav-link" href="12-performance.html">12 Performance</a>
+        <a class="nav-link" href="13-docker.html">13 Docker &amp; Deploy</a>
+        <a class="nav-link" href="14-testing.html">14 Testing</a>
+        <a class="nav-link" href="15-coding.html">15 Coding</a>
+        <a class="nav-link" href="16-projects.html">16 Projects</a>
+      </div>
+      <div class="meta">Mark topics reviewed as you go. Progress is stored in this browser.</div>
+    </nav>
+    <main>
+      <p class="kicker">Phase 04 · HTTP application design</p>
+      <header class="hero">
+        <h2>Express &amp; API Architecture</h2>
+        <p class="lead">Build secure, observable Express boundaries around testable order and payment use cases, including failure and scaling concerns.</p>
+      </header>
+      <div class="note">Interview shape: claim → mechanism → production example → failure → trade-off. Reveal answers only after you attempt them aloud.</div>
+      <div class="phase-layout">
+        <aside class="toc">
+          <strong>On this page</strong>
+          <div class="toc-list"></div>
+        </aside>
+        <div class="topics">
+          
+  <article class="topic" id="architecture">
+    <div class="topic-head">
+      <h3>Express architecture</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Express is a thin ordered router/middleware pipeline around Node HTTP. Keep transport adaptation separate from application and domain policy.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Thin infrastructure boundaries prevent request objects, status codes, and framework lifecycle from leaking through the order/payment core.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>const layers = [&quot;route&quot;, &quot;validation&quot;, &quot;controller&quot;, &quot;service&quot;, &quot;repository&quot;];
+console.log(layers.join(&quot; -&gt; &quot;));</pre>
+        <div class="expected"><strong>Expected:</strong><pre>route -&gt; validation -&gt; controller -&gt; service -&gt; repository</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Express architecture only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain Express architecture and give a production example.</li><li>What bug would reveal a weak understanding of Express architecture?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Express architecture is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain Express architecture in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates Express architecture, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="middleware">
+    <div class="topic-head">
+      <h3>Middleware</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Middleware runs in registration order and must end the response, call <code>next()</code>, or pass an error. Prefer narrow cross-cutting responsibilities.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>The chain composes reusable transport concerns, but hidden ordering dependencies and double completion cause fragile behavior.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>const chain = [req =&gt; (req.trace=&quot;t1&quot;), req =&gt; (req.user=&quot;u1&quot;)];
+const req = {}; chain.forEach(fn =&gt; fn(req)); console.log(req.trace, req.user);</pre>
+        <div class="expected"><strong>Expected:</strong><pre>t1 u1</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Middleware only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain Middleware and give a production example.</li><li>What bug would reveal a weak understanding of Middleware?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Middleware is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain Middleware in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates Middleware, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="authentication">
+    <div class="topic-head">
+      <h3>Authentication</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Authentication verifies identity using sessions, tokens, or mTLS and attaches a minimal principal after issuer, audience, expiry, and signature checks.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Identity must be established before policy. Token decoding without verification is not authentication.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>const principal = { sub: &quot;u1&quot;, scopes: [&quot;orders:read&quot;] };
+console.log(principal.sub);</pre>
+        <div class="expected"><strong>Expected:</strong><pre>u1</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Authentication only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain Authentication and give a production example.</li><li>What bug would reveal a weak understanding of Authentication?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Authentication is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain Authentication in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates Authentication, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="authorization">
+    <div class="topic-head">
+      <h3>Authorization</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Authorization decides whether a verified principal may perform an action on a resource, including tenant and ownership constraints.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Central policy avoids scattered role checks and protects against IDOR where authenticated users access another account's orders.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>const canRead = (p, o) =&gt; p.tenantId === o.tenantId;
+console.log(canRead({tenantId:&quot;t1&quot;}, {tenantId:&quot;t1&quot;}));</pre>
+        <div class="expected"><strong>Expected:</strong><pre>true</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Authorization only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain Authorization and give a production example.</li><li>What bug would reveal a weak understanding of Authorization?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Authorization is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain Authorization in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates Authorization, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="rbac">
+    <div class="topic-head">
+      <h3>RBAC</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>RBAC maps roles to permissions; production policy often combines roles with ownership, tenant, state, or amount attributes.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Roles simplify administration but role explosion and coarse checks require a clear permission vocabulary and deny-by-default behavior.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>const permissions = { support: new Set([&quot;order:read&quot;]), admin: new Set([&quot;order:refund&quot;]) };
+console.log(permissions.support.has(&quot;order:read&quot;));</pre>
+        <div class="expected"><strong>Expected:</strong><pre>true</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining RBAC only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain RBAC and give a production example.</li><li>What bug would reveal a weak understanding of RBAC?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">RBAC is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain RBAC in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates RBAC, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="request-validation">
+    <div class="topic-head">
+      <h3>Request validation</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Validate params, query, headers, and bodies at the edge; reject unknown or malformed data with stable machine-readable errors.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Runtime validation protects the domain from hostile or stale clients and prevents implicit coercion bugs.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>const input = { amount: 100 };
+if (!Number.isFinite(input.amount) || input.amount &lt;= 0) throw new Error(&quot;invalid&quot;);
+console.log(&quot;valid&quot;);</pre>
+        <div class="expected"><strong>Expected:</strong><pre>valid</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Request validation only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain Request validation and give a production example.</li><li>What bug would reveal a weak understanding of Request validation?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Request validation is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain Request validation in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates Request validation, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="error-handling">
+    <div class="topic-head">
+      <h3>Express error handling</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Translate known domain errors once in terminal error middleware, preserve causes, redact internals, and avoid writing after headers are sent.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Central translation makes API semantics consistent while logs retain operational context without leaking stack traces.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>const map = { CARD_DECLINED: 422, NOT_FOUND: 404 };
+console.log(map.CARD_DECLINED);</pre>
+        <div class="expected"><strong>Expected:</strong><pre>422</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Express error handling only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain Express error handling and give a production example.</li><li>What bug would reveal a weak understanding of Express error handling?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Express error handling is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain Express error handling in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates Express error handling, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="controllers">
+    <div class="topic-head">
+      <h3>Controllers</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Controllers adapt HTTP input to use-case calls and map results to HTTP. They should not own pricing, transaction, or provider policy.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>A thin controller is easy to contract-test and lets the same application use case serve jobs, GraphQL, or CLI adapters.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>const controller = async (req, service) =&gt; ({ status: 201, body: await service.create(req.body) });
+console.log(typeof controller);</pre>
+        <div class="expected"><strong>Expected:</strong><pre>function</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Controllers only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain Controllers and give a production example.</li><li>What bug would reveal a weak understanding of Controllers?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Controllers is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain Controllers in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates Controllers, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="services">
+    <div class="topic-head">
+      <h3>Services</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Application services coordinate domain rules, repositories, transactions, idempotency, and external gateways around a use case.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>They establish an explicit orchestration boundary without turning into unstructured global helper classes.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>const checkout = async ({ orderRepo, payments }, id) =&gt; payments.authorize((await orderRepo.get(id)).total);
+console.log(typeof checkout);</pre>
+        <div class="expected"><strong>Expected:</strong><pre>function</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Services only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain Services and give a production example.</li><li>What bug would reveal a weak understanding of Services?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Services is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain Services in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates Services, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="repositories">
+    <div class="topic-head">
+      <h3>Repositories</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Repositories expose domain-oriented persistence operations and hide query mechanics, while transaction ownership remains explicit.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>They reduce database coupling, but generic CRUD repositories often hide needed query semantics and performance.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>const repo = new Map([[&quot;o1&quot;, { id: &quot;o1&quot; }]]);
+console.log(repo.get(&quot;o1&quot;).id);</pre>
+        <div class="expected"><strong>Expected:</strong><pre>o1</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Repositories only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain Repositories and give a production example.</li><li>What bug would reveal a weak understanding of Repositories?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Repositories is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain Repositories in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates Repositories, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="dependency-injection">
+    <div class="topic-head">
+      <h3>Dependency injection</h3>
+      <span class="badge med">Medium</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Construct services with explicit dependencies at a composition root; avoid importing mutable singletons inside domain code.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Explicit dependencies improve tests and lifecycle control without requiring a heavyweight container.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>const makeService = ({ clock }) =&gt; ({ now: () =&gt; clock.now() });
+console.log(makeService({clock:{now:()=&gt;42}}).now());</pre>
+        <div class="expected"><strong>Expected:</strong><pre>42</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Dependency injection only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain Dependency injection and give a production example.</li><li>What bug would reveal a weak understanding of Dependency injection?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Dependency injection is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain Dependency injection in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates Dependency injection, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="configuration">
+    <div class="topic-head">
+      <h3>Configuration management</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Parse and validate configuration once at startup, separate secrets from ordinary settings, and expose an immutable typed object.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Failing before readiness is safer than discovering a malformed payment URL during live traffic.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>const config = Object.freeze({ timeoutMs: Number(process.env.TIMEOUT_MS || 1000) });
+console.log(config.timeoutMs);</pre>
+        <div class="expected"><strong>Expected:</strong><pre>1000</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Configuration management only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain Configuration management and give a production example.</li><li>What bug would reveal a weak understanding of Configuration management?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Configuration management is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain Configuration management in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates Configuration management, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="logging">
+    <div class="topic-head">
+      <h3>Express logging</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Create request context early, emit structured completion logs, correlate downstream calls, and redact authorization, cookies, and payment data.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Boundary logging captures method, route, status, duration, and trace once, avoiding noisy duplicate records.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>const log = { event: &quot;request_complete&quot;, route: &quot;/orders/:id&quot;, status: 200 };
+console.log(JSON.stringify(log));</pre>
+        <div class="expected"><strong>Expected:</strong><pre>{&quot;event&quot;:&quot;request_complete&quot;,&quot;route&quot;:&quot;/orders/:id&quot;,&quot;status&quot;:200}</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Express logging only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain Express logging and give a production example.</li><li>What bug would reveal a weak understanding of Express logging?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Express logging is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain Express logging in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates Express logging, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="api-versioning">
+    <div class="topic-head">
+      <h3>API versioning</h3>
+      <span class="badge med">Medium</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Version only when contracts make incompatible changes; support additive evolution, deprecation telemetry, migration windows, and explicit ownership.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>URLs or headers identify a contract, but versioning does not remove the operational cost of parallel implementations.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>const routes = new Map([[&quot;v1&quot;, &quot;/v1/orders&quot;], [&quot;v2&quot;, &quot;/v2/orders&quot;]]);
+console.log(routes.get(&quot;v2&quot;));</pre>
+        <div class="expected"><strong>Expected:</strong><pre>/v2/orders</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining API versioning only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain API versioning and give a production example.</li><li>What bug would reveal a weak understanding of API versioning?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">API versioning is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain API versioning in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates API versioning, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="pagination">
+    <div class="topic-head">
+      <h3>Pagination</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Offset pagination is simple but unstable and costly at depth; cursor/keyset pagination uses a deterministic unique ordering and opaque cursor.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Keyset queries continue from indexed values, avoiding skipped/duplicated rows during concurrent order creation.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>const rows = [{id:3},{id:2},{id:1}];
+console.log(rows.filter(x =&gt; x.id &lt; 3).slice(0,1)[0].id);</pre>
+        <div class="expected"><strong>Expected:</strong><pre>2</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Pagination only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain Pagination and give a production example.</li><li>What bug would reveal a weak understanding of Pagination?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Pagination is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain Pagination in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates Pagination, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="filtering">
+    <div class="topic-head">
+      <h3>Filtering</h3>
+      <span class="badge med">Medium</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Expose an allowlisted filter grammar mapped to parameterized queries and indexed fields; define null and multi-value semantics.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Arbitrary query forwarding creates injection and unbounded-query risk, while explicit filters preserve a stable API.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>const allowed = new Set([&quot;status&quot;, &quot;customerId&quot;]);
+console.log(allowed.has(&quot;status&quot;));</pre>
+        <div class="expected"><strong>Expected:</strong><pre>true</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Filtering only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain Filtering and give a production example.</li><li>What bug would reveal a weak understanding of Filtering?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Filtering is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain Filtering in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates Filtering, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="sorting">
+    <div class="topic-head">
+      <h3>Sorting</h3>
+      <span class="badge med">Medium</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Allowlist sortable fields, define direction and null order, and append a unique tie-breaker for deterministic pages.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Without total ordering, equal values move between pages and cursor pagination cannot resume reliably.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>const orders = [{id:2,total:10},{id:1,total:10}].sort((a,b)=&gt;b.total-a.total || b.id-a.id);
+console.log(orders.map(x=&gt;x.id).join(&quot;,&quot;));</pre>
+        <div class="expected"><strong>Expected:</strong><pre>2,1</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Sorting only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain Sorting and give a production example.</li><li>What bug would reveal a weak understanding of Sorting?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Sorting is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain Sorting in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates Sorting, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="searching">
+    <div class="topic-head">
+      <h3>Searching</h3>
+      <span class="badge med">Medium</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Choose prefix, full-text, trigram, or external search based on semantics; normalize input, cap work, and rank deterministically.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>A database LIKE scan may work initially but becomes unpredictable without suitable indexes and query limits.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>const orders = [&quot;alpha-1&quot;, &quot;beta-2&quot;];
+console.log(orders.filter(x =&gt; x.includes(&quot;alpha&quot;)).length);</pre>
+        <div class="expected"><strong>Expected:</strong><pre>1</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Searching only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain Searching and give a production example.</li><li>What bug would reveal a weak understanding of Searching?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Searching is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain Searching in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates Searching, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="file-uploads">
+    <div class="topic-head">
+      <h3>File uploads</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Stream uploads with size/type limits, sanitize metadata, store outside app memory, scan asynchronously, and use signed object-storage URLs when suitable.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Buffering attacker-controlled files exhausts memory; streaming and direct uploads bound application resource use.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>const { Readable } = require(&quot;stream&quot;);
+let bytes=0; Readable.from([&quot;abc&quot;]).on(&quot;data&quot;, c =&gt; bytes += c.length).on(&quot;end&quot;, () =&gt; console.log(bytes));</pre>
+        <div class="expected"><strong>Expected:</strong><pre>3</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining File uploads only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain File uploads and give a production example.</li><li>What bug would reveal a weak understanding of File uploads?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">File uploads is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain File uploads in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates File uploads, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="webhooks">
+    <div class="topic-head">
+      <h3>Webhooks</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Verify signatures over raw bytes, enforce timestamp tolerance, persist receipt idempotently, acknowledge quickly, and process asynchronously.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Providers retry and deliver out of order; durable idempotent ingestion separates availability from business processing.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>const seen = new Set();
+const accept = id =&gt; seen.has(id) ? &quot;duplicate&quot; : (seen.add(id), &quot;accepted&quot;);
+console.log(accept(&quot;evt1&quot;), accept(&quot;evt1&quot;));</pre>
+        <div class="expected"><strong>Expected:</strong><pre>accepted duplicate</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Webhooks only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain Webhooks and give a production example.</li><li>What bug would reveal a weak understanding of Webhooks?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Webhooks is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain Webhooks in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates Webhooks, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="background-jobs">
+    <div class="topic-head">
+      <h3>Background jobs</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Use durable queues for slow or retryable work, with idempotent handlers, bounded retries, backoff, dead-lettering, and observability.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>HTTP request lifetimes are poor owners for email, reconciliation, and provider retries; durable queues survive process restarts.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>const job = { id: &quot;refund:o1&quot;, attempt: 1, maxAttempts: 5 };
+console.log(job.attempt &lt; job.maxAttempts);</pre>
+        <div class="expected"><strong>Expected:</strong><pre>true</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Background jobs only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain Background jobs and give a production example.</li><li>What bug would reveal a weak understanding of Background jobs?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Background jobs is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain Background jobs in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates Background jobs, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="bad-good-architecture">
+    <div class="topic-head">
+      <h3>Bad vs good architecture</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Bad architecture mixes validation, SQL, payment calls, policy, and response mapping in one route. Good architecture uses thin adapters, explicit use cases, domain rules, and replaceable infrastructure.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Separation is valuable when it clarifies ownership, testing, and transactions—not as folder ceremony. Dependencies should point toward stable policy.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>const good = [&quot;route&quot;, &quot;controller&quot;, &quot;checkoutUseCase&quot;, &quot;repositories/gateways&quot;];
+console.log(good.join(&quot; -&gt; &quot;));</pre>
+        <div class="expected"><strong>Expected:</strong><pre>route -&gt; controller -&gt; checkoutUseCase -&gt; repositories/gateways</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Bad vs good architecture only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain Bad vs good architecture and give a production example.</li><li>What bug would reveal a weak understanding of Bad vs good architecture?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Bad vs good architecture is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain Bad vs good architecture in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Refactor a single 150-line checkout route into validation, controller, use case, repository, and payment gateway. Explain transaction and idempotency boundaries.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+          
+          
+          <div class="phase-nav"><a class="btn btn-ghost" href="03-typescript.html">← TypeScript Mastery</a><a class="btn btn-primary" href="05-rest.html">REST API Design →</a></div>
+        </div>
+      </div>
+      <footer class="fine">Phase 04 · Node.js / TypeScript interview preparation</footer>
+    </main>
+  </div>
+  <script src="../assets/prep.js"></script>
+</body>
+</html>

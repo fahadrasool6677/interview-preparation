@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>System Design — Node.js Interview Prep</title>
+  <link rel="stylesheet" href="../assets/prep.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" />
+</head>
+<body data-page="phase" data-phase="11">
+  <div class="app">
+    <nav class="sidebar">
+      <h1>Node.js Interview Prep</h1>
+      <p class="tag">5-year · Backend / Full-stack · Senior track</p>
+      <a class="nav-link" href="../nodejs-interview-preparation.html">← Hub</a>
+      <div class="nav-group">Phases</div>
+      <div id="phase-links">
+        <a class="nav-link" href="01-javascript.html">01 JavaScript</a>
+        <a class="nav-link" href="02-nodejs.html">02 Node.js</a>
+        <a class="nav-link" href="03-typescript.html">03 TypeScript</a>
+        <a class="nav-link" href="04-express.html">04 Express</a>
+        <a class="nav-link" href="05-rest.html">05 REST APIs</a>
+        <a class="nav-link" href="06-databases.html">06 Databases</a>
+        <a class="nav-link" href="07-redis.html">07 Redis</a>
+        <a class="nav-link" href="08-auth-security.html">08 Auth &amp; Security</a>
+        <a class="nav-link" href="09-microservices.html">09 Microservices</a>
+        <a class="nav-link" href="10-queues.html">10 Queues</a>
+        <a class="nav-link" href="11-system-design.html">11 System Design</a>
+        <a class="nav-link" href="12-performance.html">12 Performance</a>
+        <a class="nav-link" href="13-docker.html">13 Docker &amp; Deploy</a>
+        <a class="nav-link" href="14-testing.html">14 Testing</a>
+        <a class="nav-link" href="15-coding.html">15 Coding</a>
+        <a class="nav-link" href="16-projects.html">16 Projects</a>
+      </div>
+      <div class="meta">Mark topics reviewed as you go. Progress is stored in this browser.</div>
+    </nav>
+    <main>
+      <p class="kicker">Phase 11 · Architecture interviews</p>
+      <header class="hero">
+        <h2>System Design</h2>
+        <p class="lead">Start with requirements and estimates, define invariants and SLOs, then evolve the design around bottlenecks and failure modes.</p>
+      </header>
+      <div class="note">Interview shape: claim → mechanism → production example → failure → trade-off. Reveal answers only after you attempt them aloud.</div>
+      <div class="phase-layout">
+        <aside class="toc">
+          <strong>On this page</strong>
+          <div class="toc-list"></div>
+        </aside>
+        <div class="topics">
+          
+  <article class="topic" id="requirements-gathering">
+    <div class="topic-head">
+      <h3>Requirements gathering</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Clarify actors, workflows, scope, constraints, and success metrics before drawing boxes.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Architecture is only defensible against explicit requirements and assumptions.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Ask: daily active users, read/write ratio, geography, retention, payload size, peak factor, compliance, and launch scope.</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating requirements gathering as a product choice without measuring its operational cost.</li><li>Explaining only the happy path; senior answers include overload, partial failure, and recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain requirements gathering and when you would use it.</li><li>What production signal tells you this design is failing?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak"><strong>Model answer:</strong> Clarify actors, workflows, scope, constraints, and success metrics before drawing boxes. I would define the SLO, instrument the critical path, and validate the decision under realistic load before standardizing it.</div><div class="speak"><strong>Failure signal:</strong> Watch latency percentiles, error/timeout rate, saturation, backlog, and business-level correctness—not averages alone.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How does this behave during a partial outage or retry surge?</li><li>Which trade-off would make you reverse this decision?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Bound concurrency and retries, use deadlines and backpressure, preserve idempotency, and make degradation explicit. Recovery must be tested, not assumed.</div><div class="speak">Reverse the choice when measured complexity, tail latency, consistency risk, or on-call burden exceeds the isolation or scaling benefit.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Sketch a production-ready use of requirements gathering. Include SLOs, telemetry, one failure injection, and a rollback or recovery path.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="functional-requirements">
+    <div class="topic-head">
+      <h3>Functional requirements</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Functional requirements state user-visible capabilities and system behaviors.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Prioritizing the core flow prevents designing every possible feature in a 45-minute interview.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Messaging MVP: send, receive, delivery status, conversation history; defer search and reactions.</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating functional requirements as a product choice without measuring its operational cost.</li><li>Explaining only the happy path; senior answers include overload, partial failure, and recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain functional requirements and when you would use it.</li><li>What production signal tells you this design is failing?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak"><strong>Model answer:</strong> Functional requirements state user-visible capabilities and system behaviors. I would define the SLO, instrument the critical path, and validate the decision under realistic load before standardizing it.</div><div class="speak"><strong>Failure signal:</strong> Watch latency percentiles, error/timeout rate, saturation, backlog, and business-level correctness—not averages alone.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How does this behave during a partial outage or retry surge?</li><li>Which trade-off would make you reverse this decision?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Bound concurrency and retries, use deadlines and backpressure, preserve idempotency, and make degradation explicit. Recovery must be tested, not assumed.</div><div class="speak">Reverse the choice when measured complexity, tail latency, consistency risk, or on-call burden exceeds the isolation or scaling benefit.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Sketch a production-ready use of functional requirements. Include SLOs, telemetry, one failure injection, and a rollback or recovery path.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="non-functional-requirements">
+    <div class="topic-head">
+      <h3>Non-functional requirements</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>NFRs quantify latency, throughput, availability, durability, consistency, security, and cost.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Numbers expose the dominant constraints and make trade-offs testable.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>p99 send latency &lt;300ms, 99.99% durable acceptance, 1B messages/day, 7-year encrypted retention.</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating non-functional requirements as a product choice without measuring its operational cost.</li><li>Explaining only the happy path; senior answers include overload, partial failure, and recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain non-functional requirements and when you would use it.</li><li>What production signal tells you this design is failing?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak"><strong>Model answer:</strong> NFRs quantify latency, throughput, availability, durability, consistency, security, and cost. I would define the SLO, instrument the critical path, and validate the decision under realistic load before standardizing it.</div><div class="speak"><strong>Failure signal:</strong> Watch latency percentiles, error/timeout rate, saturation, backlog, and business-level correctness—not averages alone.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How does this behave during a partial outage or retry surge?</li><li>Which trade-off would make you reverse this decision?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Bound concurrency and retries, use deadlines and backpressure, preserve idempotency, and make degradation explicit. Recovery must be tested, not assumed.</div><div class="speak">Reverse the choice when measured complexity, tail latency, consistency risk, or on-call burden exceeds the isolation or scaling benefit.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Sketch a production-ready use of non-functional requirements. Include SLOs, telemetry, one failure injection, and a rollback or recovery path.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="scalability">
+    <div class="topic-head">
+      <h3>Scalability</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Scalability is maintaining objectives as load grows by partitioning work, removing bottlenecks, and adding capacity.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Stateless horizontal scaling is useful only if databases and hot keys scale with it.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Estimate peak QPS, storage growth, bandwidth, and hottest tenant before choosing shards.</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating scalability as a product choice without measuring its operational cost.</li><li>Explaining only the happy path; senior answers include overload, partial failure, and recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain scalability and when you would use it.</li><li>What production signal tells you this design is failing?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak"><strong>Model answer:</strong> Scalability is maintaining objectives as load grows by partitioning work, removing bottlenecks, and adding capacity. I would define the SLO, instrument the critical path, and validate the decision under realistic load before standardizing it.</div><div class="speak"><strong>Failure signal:</strong> Watch latency percentiles, error/timeout rate, saturation, backlog, and business-level correctness—not averages alone.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How does this behave during a partial outage or retry surge?</li><li>Which trade-off would make you reverse this decision?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Bound concurrency and retries, use deadlines and backpressure, preserve idempotency, and make degradation explicit. Recovery must be tested, not assumed.</div><div class="speak">Reverse the choice when measured complexity, tail latency, consistency risk, or on-call burden exceeds the isolation or scaling benefit.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Sketch a production-ready use of scalability. Include SLOs, telemetry, one failure injection, and a rollback or recovery path.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="availability">
+    <div class="topic-head">
+      <h3>Availability</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Availability is the fraction of intended requests that receive acceptable service.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Redundancy helps only when failure domains and dependencies are independent.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Multi-AZ API and database; degrade recommendations during failure while preserving checkout.</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating availability as a product choice without measuring its operational cost.</li><li>Explaining only the happy path; senior answers include overload, partial failure, and recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain availability and when you would use it.</li><li>What production signal tells you this design is failing?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak"><strong>Model answer:</strong> Availability is the fraction of intended requests that receive acceptable service. I would define the SLO, instrument the critical path, and validate the decision under realistic load before standardizing it.</div><div class="speak"><strong>Failure signal:</strong> Watch latency percentiles, error/timeout rate, saturation, backlog, and business-level correctness—not averages alone.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How does this behave during a partial outage or retry surge?</li><li>Which trade-off would make you reverse this decision?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Bound concurrency and retries, use deadlines and backpressure, preserve idempotency, and make degradation explicit. Recovery must be tested, not assumed.</div><div class="speak">Reverse the choice when measured complexity, tail latency, consistency risk, or on-call burden exceeds the isolation or scaling benefit.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Sketch a production-ready use of availability. Include SLOs, telemetry, one failure injection, and a rollback or recovery path.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="reliability">
+    <div class="topic-head">
+      <h3>Reliability</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Reliability includes correct, durable operation over time—not just successful HTTP responses.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Data loss, duplicate billing, and silent corruption can violate reliability while uptime remains green.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Use invariants, reconciliation, checksums, backups, restore tests, and error budgets.</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating reliability as a product choice without measuring its operational cost.</li><li>Explaining only the happy path; senior answers include overload, partial failure, and recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain reliability and when you would use it.</li><li>What production signal tells you this design is failing?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak"><strong>Model answer:</strong> Reliability includes correct, durable operation over time—not just successful HTTP responses. I would define the SLO, instrument the critical path, and validate the decision under realistic load before standardizing it.</div><div class="speak"><strong>Failure signal:</strong> Watch latency percentiles, error/timeout rate, saturation, backlog, and business-level correctness—not averages alone.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How does this behave during a partial outage or retry surge?</li><li>Which trade-off would make you reverse this decision?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Bound concurrency and retries, use deadlines and backpressure, preserve idempotency, and make degradation explicit. Recovery must be tested, not assumed.</div><div class="speak">Reverse the choice when measured complexity, tail latency, consistency risk, or on-call burden exceeds the isolation or scaling benefit.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Sketch a production-ready use of reliability. Include SLOs, telemetry, one failure injection, and a rollback or recovery path.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="consistency">
+    <div class="topic-head">
+      <h3>Consistency</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Consistency defines which writes a read may observe and in what order.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Stronger coordination increases latency and reduces availability under partition; choose per invariant.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Strong consistency for account balance; eventual consistency for product view counts.</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating consistency as a product choice without measuring its operational cost.</li><li>Explaining only the happy path; senior answers include overload, partial failure, and recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain consistency and when you would use it.</li><li>What production signal tells you this design is failing?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak"><strong>Model answer:</strong> Consistency defines which writes a read may observe and in what order. I would define the SLO, instrument the critical path, and validate the decision under realistic load before standardizing it.</div><div class="speak"><strong>Failure signal:</strong> Watch latency percentiles, error/timeout rate, saturation, backlog, and business-level correctness—not averages alone.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How does this behave during a partial outage or retry surge?</li><li>Which trade-off would make you reverse this decision?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Bound concurrency and retries, use deadlines and backpressure, preserve idempotency, and make degradation explicit. Recovery must be tested, not assumed.</div><div class="speak">Reverse the choice when measured complexity, tail latency, consistency risk, or on-call burden exceeds the isolation or scaling benefit.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Sketch a production-ready use of consistency. Include SLOs, telemetry, one failure injection, and a rollback or recovery path.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="cap-theorem">
+    <div class="topic-head">
+      <h3>CAP theorem</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>During a network partition, a distributed system must choose whether conflicting operations preserve consistency or availability.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>CAP applies under partition and does not eliminate latency, durability, or normal-operation trade-offs.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Reject a minority-region inventory write for consistency; permit stale catalog reads for availability.</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating cap theorem as a product choice without measuring its operational cost.</li><li>Explaining only the happy path; senior answers include overload, partial failure, and recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain cap theorem and when you would use it.</li><li>What production signal tells you this design is failing?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak"><strong>Model answer:</strong> During a network partition, a distributed system must choose whether conflicting operations preserve consistency or availability. I would define the SLO, instrument the critical path, and validate the decision under realistic load before standardizing it.</div><div class="speak"><strong>Failure signal:</strong> Watch latency percentiles, error/timeout rate, saturation, backlog, and business-level correctness—not averages alone.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How does this behave during a partial outage or retry surge?</li><li>Which trade-off would make you reverse this decision?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Bound concurrency and retries, use deadlines and backpressure, preserve idempotency, and make degradation explicit. Recovery must be tested, not assumed.</div><div class="speak">Reverse the choice when measured complexity, tail latency, consistency risk, or on-call burden exceeds the isolation or scaling benefit.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Sketch a production-ready use of cap theorem. Include SLOs, telemetry, one failure injection, and a rollback or recovery path.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="load-balancing">
+    <div class="topic-head">
+      <h3>Load balancing</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>A load balancer distributes traffic using health, capacity, locality, and affinity signals.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Algorithms and health checks affect tail latency and failure recovery.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Least-outstanding requests with outlier ejection; consistent hashing only where affinity is required.</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating load balancing as a product choice without measuring its operational cost.</li><li>Explaining only the happy path; senior answers include overload, partial failure, and recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain load balancing and when you would use it.</li><li>What production signal tells you this design is failing?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak"><strong>Model answer:</strong> A load balancer distributes traffic using health, capacity, locality, and affinity signals. I would define the SLO, instrument the critical path, and validate the decision under realistic load before standardizing it.</div><div class="speak"><strong>Failure signal:</strong> Watch latency percentiles, error/timeout rate, saturation, backlog, and business-level correctness—not averages alone.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How does this behave during a partial outage or retry surge?</li><li>Which trade-off would make you reverse this decision?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Bound concurrency and retries, use deadlines and backpressure, preserve idempotency, and make degradation explicit. Recovery must be tested, not assumed.</div><div class="speak">Reverse the choice when measured complexity, tail latency, consistency risk, or on-call burden exceeds the isolation or scaling benefit.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Sketch a production-ready use of load balancing. Include SLOs, telemetry, one failure injection, and a rollback or recovery path.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="caching">
+    <div class="topic-head">
+      <h3>Caching</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Caching stores reusable data closer to demand with explicit keys, TTLs, invalidation, and stampede protection.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>It reduces latency and origin load but introduces staleness and another failure mode.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Cache-aside product reads; versioned key, TTL jitter, request coalescing, and stale-if-error.</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating caching as a product choice without measuring its operational cost.</li><li>Explaining only the happy path; senior answers include overload, partial failure, and recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain caching and when you would use it.</li><li>What production signal tells you this design is failing?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak"><strong>Model answer:</strong> Caching stores reusable data closer to demand with explicit keys, TTLs, invalidation, and stampede protection. I would define the SLO, instrument the critical path, and validate the decision under realistic load before standardizing it.</div><div class="speak"><strong>Failure signal:</strong> Watch latency percentiles, error/timeout rate, saturation, backlog, and business-level correctness—not averages alone.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How does this behave during a partial outage or retry surge?</li><li>Which trade-off would make you reverse this decision?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Bound concurrency and retries, use deadlines and backpressure, preserve idempotency, and make degradation explicit. Recovery must be tested, not assumed.</div><div class="speak">Reverse the choice when measured complexity, tail latency, consistency risk, or on-call burden exceeds the isolation or scaling benefit.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Sketch a production-ready use of caching. Include SLOs, telemetry, one failure injection, and a rollback or recovery path.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="database-scaling">
+    <div class="topic-head">
+      <h3>Database scaling</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Scale databases through indexes, query design, replicas, partitioning, and carefully chosen denormalization.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>The database is usually limited by access patterns and hot spots before raw row count.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Route read-tolerant queries to replicas; shard orders by tenant; isolate hot tenants.</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating database scaling as a product choice without measuring its operational cost.</li><li>Explaining only the happy path; senior answers include overload, partial failure, and recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain database scaling and when you would use it.</li><li>What production signal tells you this design is failing?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak"><strong>Model answer:</strong> Scale databases through indexes, query design, replicas, partitioning, and carefully chosen denormalization. I would define the SLO, instrument the critical path, and validate the decision under realistic load before standardizing it.</div><div class="speak"><strong>Failure signal:</strong> Watch latency percentiles, error/timeout rate, saturation, backlog, and business-level correctness—not averages alone.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How does this behave during a partial outage or retry surge?</li><li>Which trade-off would make you reverse this decision?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Bound concurrency and retries, use deadlines and backpressure, preserve idempotency, and make degradation explicit. Recovery must be tested, not assumed.</div><div class="speak">Reverse the choice when measured complexity, tail latency, consistency risk, or on-call burden exceeds the isolation or scaling benefit.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Sketch a production-ready use of database scaling. Include SLOs, telemetry, one failure injection, and a rollback or recovery path.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="queues">
+    <div class="topic-head">
+      <h3>Queues</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Queues buffer asynchronous work and provide backpressure between components.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>They smooth bursts but queue age adds user-visible latency and can hide an overloaded dependency.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Accept upload, enqueue scan/transcode, expose status; autoscale on oldest-message age.</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating queues as a product choice without measuring its operational cost.</li><li>Explaining only the happy path; senior answers include overload, partial failure, and recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain queues and when you would use it.</li><li>What production signal tells you this design is failing?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak"><strong>Model answer:</strong> Queues buffer asynchronous work and provide backpressure between components. I would define the SLO, instrument the critical path, and validate the decision under realistic load before standardizing it.</div><div class="speak"><strong>Failure signal:</strong> Watch latency percentiles, error/timeout rate, saturation, backlog, and business-level correctness—not averages alone.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How does this behave during a partial outage or retry surge?</li><li>Which trade-off would make you reverse this decision?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Bound concurrency and retries, use deadlines and backpressure, preserve idempotency, and make degradation explicit. Recovery must be tested, not assumed.</div><div class="speak">Reverse the choice when measured complexity, tail latency, consistency risk, or on-call burden exceeds the isolation or scaling benefit.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Sketch a production-ready use of queues. Include SLOs, telemetry, one failure injection, and a rollback or recovery path.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="object-storage">
+    <div class="topic-head">
+      <h3>Object storage</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Object storage holds large immutable blobs outside transactional databases.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>It offers cheap durable capacity and direct transfer while metadata and authorization remain in the application.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Issue short-lived presigned multipart upload; verify checksum; store object key and metadata.</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating object storage as a product choice without measuring its operational cost.</li><li>Explaining only the happy path; senior answers include overload, partial failure, and recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain object storage and when you would use it.</li><li>What production signal tells you this design is failing?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak"><strong>Model answer:</strong> Object storage holds large immutable blobs outside transactional databases. I would define the SLO, instrument the critical path, and validate the decision under realistic load before standardizing it.</div><div class="speak"><strong>Failure signal:</strong> Watch latency percentiles, error/timeout rate, saturation, backlog, and business-level correctness—not averages alone.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How does this behave during a partial outage or retry surge?</li><li>Which trade-off would make you reverse this decision?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Bound concurrency and retries, use deadlines and backpressure, preserve idempotency, and make degradation explicit. Recovery must be tested, not assumed.</div><div class="speak">Reverse the choice when measured complexity, tail latency, consistency risk, or on-call burden exceeds the isolation or scaling benefit.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Sketch a production-ready use of object storage. Include SLOs, telemetry, one failure injection, and a rollback or recovery path.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="cdn">
+    <div class="topic-head">
+      <h3>CDN</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>A CDN serves cacheable content from edge locations and shields origins.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Geographic proximity lowers latency and egress; cache keys and invalidation determine correctness.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Signed URL for private media; immutable content hash; purge only metadata aliases.</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating cdn as a product choice without measuring its operational cost.</li><li>Explaining only the happy path; senior answers include overload, partial failure, and recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain cdn and when you would use it.</li><li>What production signal tells you this design is failing?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak"><strong>Model answer:</strong> A CDN serves cacheable content from edge locations and shields origins. I would define the SLO, instrument the critical path, and validate the decision under realistic load before standardizing it.</div><div class="speak"><strong>Failure signal:</strong> Watch latency percentiles, error/timeout rate, saturation, backlog, and business-level correctness—not averages alone.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How does this behave during a partial outage or retry surge?</li><li>Which trade-off would make you reverse this decision?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Bound concurrency and retries, use deadlines and backpressure, preserve idempotency, and make degradation explicit. Recovery must be tested, not assumed.</div><div class="speak">Reverse the choice when measured complexity, tail latency, consistency risk, or on-call burden exceeds the isolation or scaling benefit.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Sketch a production-ready use of cdn. Include SLOs, telemetry, one failure injection, and a rollback or recovery path.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="monitoring">
+    <div class="topic-head">
+      <h3>Monitoring</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Monitoring turns service objectives into metrics, alerts, dashboards, and actionable ownership.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Alerts should detect user impact through SLO burn, not every internal fluctuation.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Page on fast/slow error-budget burn; dashboard traffic, errors, duration, saturation, and business throughput.</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating monitoring as a product choice without measuring its operational cost.</li><li>Explaining only the happy path; senior answers include overload, partial failure, and recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain monitoring and when you would use it.</li><li>What production signal tells you this design is failing?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak"><strong>Model answer:</strong> Monitoring turns service objectives into metrics, alerts, dashboards, and actionable ownership. I would define the SLO, instrument the critical path, and validate the decision under realistic load before standardizing it.</div><div class="speak"><strong>Failure signal:</strong> Watch latency percentiles, error/timeout rate, saturation, backlog, and business-level correctness—not averages alone.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How does this behave during a partial outage or retry surge?</li><li>Which trade-off would make you reverse this decision?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Bound concurrency and retries, use deadlines and backpressure, preserve idempotency, and make degradation explicit. Recovery must be tested, not assumed.</div><div class="speak">Reverse the choice when measured complexity, tail latency, consistency risk, or on-call burden exceeds the isolation or scaling benefit.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Sketch a production-ready use of monitoring. Include SLOs, telemetry, one failure injection, and a rollback or recovery path.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="logging">
+    <div class="topic-head">
+      <h3>Logging</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Structured logs capture discrete diagnostic events with stable fields and controlled cardinality.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Logs support forensic detail but are expensive and incomplete without correlation and retention policy.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Log event, service, traceId, tenantId, result, duration; redact secrets and avoid raw payloads.</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating logging as a product choice without measuring its operational cost.</li><li>Explaining only the happy path; senior answers include overload, partial failure, and recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain logging and when you would use it.</li><li>What production signal tells you this design is failing?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak"><strong>Model answer:</strong> Structured logs capture discrete diagnostic events with stable fields and controlled cardinality. I would define the SLO, instrument the critical path, and validate the decision under realistic load before standardizing it.</div><div class="speak"><strong>Failure signal:</strong> Watch latency percentiles, error/timeout rate, saturation, backlog, and business-level correctness—not averages alone.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How does this behave during a partial outage or retry surge?</li><li>Which trade-off would make you reverse this decision?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Bound concurrency and retries, use deadlines and backpressure, preserve idempotency, and make degradation explicit. Recovery must be tested, not assumed.</div><div class="speak">Reverse the choice when measured complexity, tail latency, consistency risk, or on-call burden exceeds the isolation or scaling benefit.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Sketch a production-ready use of logging. Include SLOs, telemetry, one failure injection, and a rollback or recovery path.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="distributed-systems">
+    <div class="topic-head">
+      <h3>Distributed systems</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Distributed systems must handle partial failure, concurrency, clock uncertainty, and message duplication.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>A remote dependency can be slow, partitioned, or ambiguous even when the caller is healthy.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Use deadlines, idempotency, fencing tokens, quorum/consensus where required, and reconciliation.</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating distributed systems as a product choice without measuring its operational cost.</li><li>Explaining only the happy path; senior answers include overload, partial failure, and recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain distributed systems and when you would use it.</li><li>What production signal tells you this design is failing?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak"><strong>Model answer:</strong> Distributed systems must handle partial failure, concurrency, clock uncertainty, and message duplication. I would define the SLO, instrument the critical path, and validate the decision under realistic load before standardizing it.</div><div class="speak"><strong>Failure signal:</strong> Watch latency percentiles, error/timeout rate, saturation, backlog, and business-level correctness—not averages alone.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How does this behave during a partial outage or retry surge?</li><li>Which trade-off would make you reverse this decision?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Bound concurrency and retries, use deadlines and backpressure, preserve idempotency, and make degradation explicit. Recovery must be tested, not assumed.</div><div class="speak">Reverse the choice when measured complexity, tail latency, consistency risk, or on-call burden exceeds the isolation or scaling benefit.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Sketch a production-ready use of distributed systems. Include SLOs, telemetry, one failure injection, and a rollback or recovery path.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+          
+  <article class="topic" id="url-shortener">
+    <div class="topic-head">
+      <h3>URL shortener</h3>
+      <span class="badge high">Design</span>
+    </div>
+    <p>Design redirects optimized for extreme read volume while keeping creation correct and abuse-resistant.</p>
+    <div class="design-block"><h4>Requirements</h4><ul><li>Create custom or generated aliases</li><li>Redirect with low p99 latency</li><li>Expiration, analytics, and abuse controls</li></ul></div><div class="design-block"><h4>APIs</h4><ul><li>POST /v1/links {url, customAlias?, expiresAt?}</li><li>GET /:alias → 301/302</li><li>GET /v1/links/:alias/stats</li></ul></div><div class="design-block"><h4>Database schema</h4><ul><li>links(alias PK, destination, ownerId, createdAt, expiresAt, status)</li><li>click_events(eventId, alias, timestamp, region, referrer)</li></ul></div><div class="design-block"><h4>Architecture</h4><ul><li>API generates Base62 IDs or claims custom aliases transactionally</li><li>Cache/edge redirect path; database is source of truth</li><li>Clicks enter an asynchronous analytics stream</li></ul></div><div class="design-block"><h4>Scaling strategy</h4><ul><li>Partition by alias hash</li><li>Cache hot links at edge with negative-cache care</li><li>Aggregate analytics asynchronously</li></ul></div><div class="design-block"><h4>Failure scenarios</h4><ul><li>Cache serves a disabled malicious link</li><li>ID generator region failure</li><li>Hot celebrity alias overloads one partition</li></ul></div><div class="design-block"><h4>Bottlenecks</h4><ul><li>Hot keys and cache misses</li><li>Analytics cardinality and bot traffic</li></ul></div><div class="design-block"><h4>Trade-offs</h4><ul><li>301 caches aggressively but is hard to revoke; 302 preserves control</li><li>Random IDs reduce predictability but cost more bytes</li></ul></div><div class="design-block"><h4>Interview questions</h4><ul><li>How do you guarantee custom-alias uniqueness?</li><li>How do deletion and cache invalidation work?</li></ul></div>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="whatsapp-messaging">
+    <div class="topic-head">
+      <h3>WhatsApp-like messaging</h3>
+      <span class="badge high">Design</span>
+    </div>
+    <p>Design durable one-to-one and group messaging with offline delivery and per-device state.</p>
+    <div class="design-block"><h4>Requirements</h4><ul><li>Send text/media, groups, ordering per conversation</li><li>Offline sync, delivered/read receipts</li><li>End-to-end encryption assumptions</li></ul></div><div class="design-block"><h4>APIs</h4><ul><li>WebSocket SendMessage(clientMessageId, conversationId, ciphertext)</li><li>GET /sync?cursor=...</li><li>POST /media/upload-url</li></ul></div><div class="design-block"><h4>Database schema</h4><ul><li>messages(conversationId, sequence, messageId, senderId, ciphertext)</li><li>device_cursors(deviceId, conversationId, lastSequence)</li><li>memberships(conversationId, userId, role)</li></ul></div><div class="design-block"><h4>Architecture</h4><ul><li>Gateway maintains connections and authenticates devices</li><li>Sequencer assigns per-conversation order; durable log fans out</li><li>Push notification wakes offline devices; object storage holds media</li></ul></div><div class="design-block"><h4>Scaling strategy</h4><ul><li>Partition by conversationId; split exceptionally large groups</li><li>Multi-region home routing and async replication</li><li>Batch fan-out and sync</li></ul></div><div class="design-block"><h4>Failure scenarios</h4><ul><li>Gateway disconnect during send yields ambiguous result</li><li>Offline device falls behind retention</li><li>Membership change races with send</li></ul></div><div class="design-block"><h4>Bottlenecks</h4><ul><li>Celebrity groups, connection count, receipt fan-out</li></ul></div><div class="design-block"><h4>Trade-offs</h4><ul><li>Fan-out-on-write accelerates reads but amplifies large groups</li><li>Strict global ordering is rejected for per-conversation ordering</li></ul></div><div class="design-block"><h4>Interview questions</h4><ul><li>How are duplicates removed across reconnects?</li><li>How do membership and encryption-key rotation interact?</li></ul></div>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="e-commerce">
+    <div class="topic-head">
+      <h3>E-commerce system</h3>
+      <span class="badge high">Design</span>
+    </div>
+    <p>Design catalog, cart, checkout, inventory, order, and payment boundaries around explicit business invariants.</p>
+    <div class="design-block"><h4>Requirements</h4><ul><li>Browse/search products</li><li>Cart and checkout</li><li>Reserve finite stock and process payment</li><li>Track and cancel orders</li></ul></div><div class="design-block"><h4>APIs</h4><ul><li>GET /products?query=</li><li>PUT /carts/:id/items</li><li>POST /orders {cartId,idempotencyKey}</li><li>GET /orders/:id</li></ul></div><div class="design-block"><h4>Database schema</h4><ul><li>products, sku_inventory(available,reserved,version)</li><li>orders, order_items, payments</li><li>outbox and processed_events</li></ul></div><div class="design-block"><h4>Architecture</h4><ul><li>Catalog/search read models are eventually consistent</li><li>Checkout orchestrates inventory reservation and payment authorization as a saga</li><li>Order database and outbox commit together</li></ul></div><div class="design-block"><h4>Scaling strategy</h4><ul><li>Shard orders by customer/tenant</li><li>Partition inventory commands by SKU</li><li>CDN images and cache product reads</li></ul></div><div class="design-block"><h4>Failure scenarios</h4><ul><li>Payment succeeds but response is lost</li><li>Reservation expires during payment</li><li>Search displays stale price</li></ul></div><div class="design-block"><h4>Bottlenecks</h4><ul><li>Flash-sale hot SKU, payment dependency, oversized carts</li></ul></div><div class="design-block"><h4>Trade-offs</h4><ul><li>Reserve-first avoids oversell but can strand stock</li><li>Strong inventory writes with eventually consistent catalog reads</li></ul></div><div class="design-block"><h4>Interview questions</h4><ul><li>Prevent double charge and oversell.</li><li>Where is the source of truth for price at checkout?</li></ul></div>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="property-listing">
+    <div class="topic-head">
+      <h3>Property listing platform</h3>
+      <span class="badge high">Design</span>
+    </div>
+    <p>Design geo-search and listing ingestion where freshness, ranking, and fraud controls matter.</p>
+    <div class="design-block"><h4>Requirements</h4><ul><li>Create/update listings and media</li><li>Geo/bounding-box search with filters</li><li>Saved searches and lead contact</li></ul></div><div class="design-block"><h4>APIs</h4><ul><li>POST /listings</li><li>GET /search?bbox=&priceMin=&beds=</li><li>POST /saved-searches</li><li>POST /listings/:id/leads</li></ul></div><div class="design-block"><h4>Database schema</h4><ul><li>listings(id, ownerId, geo, price, attributes, status, version)</li><li>listing_media</li><li>saved_searches</li><li>leads</li></ul></div><div class="design-block"><h4>Architecture</h4><ul><li>Transactional listing store emits change events</li><li>Search index provides geo/filter queries</li><li>Media uses direct object upload and CDN</li></ul></div><div class="design-block"><h4>Scaling strategy</h4><ul><li>Partition search geographically</li><li>Precompute map clusters</li><li>Incremental index updates with reconciliation</li></ul></div><div class="design-block"><h4>Failure scenarios</h4><ul><li>Search index misses an update</li><li>Duplicate syndication import</li><li>Fraudulent listing spreads through feeds</li></ul></div><div class="design-block"><h4>Bottlenecks</h4><ul><li>Dense-city geo tiles, filter combinations, image processing</li></ul></div><div class="design-block"><h4>Trade-offs</h4><ul><li>Search freshness versus write latency</li><li>Denormalized index enables queries but requires repair</li></ul></div><div class="design-block"><h4>Interview questions</h4><ul><li>How do you reconcile source DB and index?</li><li>How do pagination and map movement avoid duplicates?</li></ul></div>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="notification-system">
+    <div class="topic-head">
+      <h3>Notification system</h3>
+      <span class="badge high">Design</span>
+    </div>
+    <p>Design policy-aware email, SMS, push, and in-app delivery without duplicate or uncontrolled sends.</p>
+    <div class="design-block"><h4>Requirements</h4><ul><li>Templates and localization</li><li>Preferences, quiet hours, priorities</li><li>Scheduling, retries, provider failover, delivery status</li></ul></div><div class="design-block"><h4>APIs</h4><ul><li>POST /notifications {idempotencyKey,template,recipient,channels}</li><li>PUT /users/:id/preferences</li><li>GET /notifications/:id</li></ul></div><div class="design-block"><h4>Database schema</h4><ul><li>notifications, attempts, templates(versioned)</li><li>preferences(userId, channel, category)</li><li>provider_callbacks(providerMessageId,status)</li></ul></div><div class="design-block"><h4>Architecture</h4><ul><li>Request persists intent and enqueues channel jobs</li><li>Policy service resolves preferences; workers render and send</li><li>Callbacks update status; reconciliation handles missing callbacks</li></ul></div><div class="design-block"><h4>Scaling strategy</h4><ul><li>Partition by recipient to enforce rate/order</li><li>Provider-specific pools and circuit breakers</li><li>Batch low-priority sends</li></ul></div><div class="design-block"><h4>Failure scenarios</h4><ul><li>Provider accepts request but times out</li><li>Bad template creates retry storm</li><li>Quiet-hours timezone changes</li></ul></div><div class="design-block"><h4>Bottlenecks</h4><ul><li>Celebrity fan-out, provider quotas, template rendering</li></ul></div><div class="design-block"><h4>Trade-offs</h4><ul><li>Failover can duplicate sends; transactional providers need stable idempotency</li><li>Priority isolation costs capacity</li></ul></div><div class="design-block"><h4>Interview questions</h4><ul><li>How do you stop a campaign immediately?</li><li>How are provider callbacks authenticated and deduplicated?</li></ul></div>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="file-upload">
+    <div class="topic-head">
+      <h3>File upload system</h3>
+      <span class="badge high">Design</span>
+    </div>
+    <p>Design secure large-file ingestion, processing, and download without proxying bytes through application servers.</p>
+    <div class="design-block"><h4>Requirements</h4><ul><li>Multipart/resumable upload</li><li>Virus scan and metadata extraction</li><li>Authorized download, lifecycle, deletion</li></ul></div><div class="design-block"><h4>APIs</h4><ul><li>POST /uploads → uploadId + signed part URLs</li><li>POST /uploads/:id/complete</li><li>GET /files/:id/download-url</li></ul></div><div class="design-block"><h4>Database schema</h4><ul><li>files(id, ownerId, objectKey, size, checksum, state)</li><li>upload_parts(uploadId,part,etag)</li><li>processing_jobs</li></ul></div><div class="design-block"><h4>Architecture</h4><ul><li>Control plane authorizes and signs direct object-store transfers</li><li>Completion verifies size/checksum and enqueues scan</li><li>Only CLEAN files receive download tokens</li></ul></div><div class="design-block"><h4>Scaling strategy</h4><ul><li>Multipart parallelism, CDN downloads, lifecycle tiers</li><li>Queue-based processing with per-tenant quotas</li></ul></div><div class="design-block"><h4>Failure scenarios</h4><ul><li>Client claims completion with missing parts</li><li>Scanner outage builds backlog</li><li>Delete races with active download</li></ul></div><div class="design-block"><h4>Bottlenecks</h4><ul><li>Huge files, decompression bombs, orphaned multipart uploads</li></ul></div><div class="design-block"><h4>Trade-offs</h4><ul><li>Presigned URLs reduce server load but constrain validation timing</li><li>Synchronous scanning is safer but harms availability</li></ul></div><div class="design-block"><h4>Interview questions</h4><ul><li>How do resumability and integrity work?</li><li>How do you guarantee quarantine before download?</li></ul></div>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="payment-system">
+    <div class="topic-head">
+      <h3>Payment system</h3>
+      <span class="badge high">Design</span>
+    </div>
+    <p>Design a ledger-centered payment service for idempotent authorization, capture, refund, and reconciliation.</p>
+    <div class="design-block"><h4>Requirements</h4><ul><li>Authorize/capture/refund</li><li>Immutable audit trail and merchant balance</li><li>Webhooks and reconciliation</li></ul></div><div class="design-block"><h4>APIs</h4><ul><li>POST /payments with Idempotency-Key</li><li>POST /payments/:id/captures</li><li>POST /payments/:id/refunds</li><li>GET /payments/:id</li></ul></div><div class="design-block"><h4>Database schema</h4><ul><li>payment_intents, provider_attempts</li><li>ledger_entries(transactionId,account,debit,credit)</li><li>idempotency_records, outbox</li></ul></div><div class="design-block"><h4>Architecture</h4><ul><li>State machine controls legal transitions</li><li>Double-entry ledger commits atomically with payment state</li><li>Provider adapter and reconciliation resolve ambiguous outcomes</li></ul></div><div class="design-block"><h4>Scaling strategy</h4><ul><li>Partition merchants while preserving ledger transaction locality</li><li>Isolate provider pools and rate limits</li><li>Read models serve reporting</li></ul></div><div class="design-block"><h4>Failure scenarios</h4><ul><li>Provider accepts capture but response is lost</li><li>Webhook arrives before API response</li><li>Partial refund races with full refund</li></ul></div><div class="design-block"><h4>Bottlenecks</h4><ul><li>Hot merchants, provider latency, reconciliation volume</li></ul></div><div class="design-block"><h4>Trade-offs</h4><ul><li>Availability yields to financial correctness</li><li>Provider abstraction helps failover but cannot erase provider semantics</li></ul></div><div class="design-block"><h4>Interview questions</h4><ul><li>How do you prevent double charge?</li><li>How does reconciliation repair unknown states?</li></ul></div>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="product-sync">
+    <div class="topic-head">
+      <h3>Product synchronization system</h3>
+      <span class="badge high">Design</span>
+    </div>
+    <p>Design ingestion and convergence of product data across a source of truth, search, marketplaces, and caches.</p>
+    <div class="design-block"><h4>Requirements</h4><ul><li>Import create/update/delete</li><li>Schema mapping and validation</li><li>Near-real-time propagation with replay and audit</li></ul></div><div class="design-block"><h4>APIs</h4><ul><li>POST /imports</li><li>PUT /products/:externalId</li><li>GET /sync-jobs/:id</li><li>POST /destinations/:id/replay</li></ul></div><div class="design-block"><h4>Database schema</h4><ul><li>products(id, sourceVersion, canonicalData)</li><li>destination_state(productId,destination,version,status)</li><li>sync_events</li></ul></div><div class="design-block"><h4>Architecture</h4><ul><li>Normalize source changes into versioned canonical events</li><li>Destination consumers upsert conditionally by version</li><li>Periodic reconciliation detects drift</li></ul></div><div class="design-block"><h4>Scaling strategy</h4><ul><li>Partition by productId to preserve order</li><li>Destination-specific queues and quotas</li><li>Bulk snapshot plus change-data-capture tail</li></ul></div><div class="design-block"><h4>Failure scenarios</h4><ul><li>Older event arrives after newer</li><li>Destination throttles for hours</li><li>Mapping bug corrupts many products</li></ul></div><div class="design-block"><h4>Bottlenecks</h4><ul><li>Large catalog snapshots, hot bulk edits, API quotas</li></ul></div><div class="design-block"><h4>Trade-offs</h4><ul><li>One canonical model simplifies consumers but may lose destination nuance</li><li>Replayability requires immutable history and storage</li></ul></div><div class="design-block"><h4>Interview questions</h4><ul><li>How do you prevent stale overwrites?</li><li>How do snapshot and incremental streams join safely?</li></ul></div>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="webhook-processing">
+    <div class="topic-head">
+      <h3>Webhook processing system</h3>
+      <span class="badge high">Design</span>
+    </div>
+    <p>Design fast, authenticated ingestion and reliable asynchronous processing of third-party callbacks.</p>
+    <div class="design-block"><h4>Requirements</h4><ul><li>Verify authenticity and reject replay</li><li>Respond quickly, deduplicate, route, retry, and replay</li><li>Preserve raw evidence</li></ul></div><div class="design-block"><h4>APIs</h4><ul><li>POST /webhooks/:provider</li><li>GET /deliveries/:id</li><li>POST /deliveries/:id/replay</li></ul></div><div class="design-block"><h4>Database schema</h4><ul><li>deliveries(provider,eventId,payloadHash,receivedAt,status)</li><li>attempts(deliveryId,consumer,attempt,error)</li><li>secrets(provider,version)</li></ul></div><div class="design-block"><h4>Architecture</h4><ul><li>Edge verifies signature against raw bytes and timestamp</li><li>Persist then acknowledge; queue dispatches normalized events</li><li>Consumers dedupe and use DLQ/redrive</li></ul></div><div class="design-block"><h4>Scaling strategy</h4><ul><li>Partition by provider/tenant with fairness</li><li>Archive payloads to object storage</li><li>Autoscale on oldest-message age</li></ul></div><div class="design-block"><h4>Failure scenarios</h4><ul><li>Provider retries before first request commits</li><li>Secret rotates during delivery</li><li>Poison event blocks a partition</li></ul></div><div class="design-block"><h4>Bottlenecks</h4><ul><li>Burst traffic, signature CPU, noisy tenants</li></ul></div><div class="design-block"><h4>Trade-offs</h4><ul><li>Acknowledge after persistence, not full processing</li><li>Ordering per entity costs parallelism</li></ul></div><div class="design-block"><h4>Interview questions</h4><ul><li>Why must signature verification use raw bytes?</li><li>How do you replay without repeating side effects?</li></ul></div>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="real-time-chat">
+    <div class="topic-head">
+      <h3>Real-time chat system</h3>
+      <span class="badge high">Design</span>
+    </div>
+    <p>Design low-latency rooms with presence, typing, history, reconnect, and abuse protection.</p>
+    <div class="design-block"><h4>Requirements</h4><ul><li>Rooms and direct chat</li><li>Ordered messages and history</li><li>Presence/typing, reconnect, moderation</li></ul></div><div class="design-block"><h4>APIs</h4><ul><li>WebSocket Authenticate/Join/Send(clientMessageId)</li><li>GET /rooms/:id/messages?before=</li><li>POST /rooms/:id/moderation</li></ul></div><div class="design-block"><h4>Database schema</h4><ul><li>messages(roomId,sequence,messageId,author,body)</li><li>memberships</li><li>connection_presence(userId,gateway,expiresAt)</li></ul></div><div class="design-block"><h4>Architecture</h4><ul><li>Gateways own connections and publish room traffic</li><li>Per-room sequencer/durable log stores messages</li><li>Presence is ephemeral with TTL; history store is durable</li></ul></div><div class="design-block"><h4>Scaling strategy</h4><ul><li>Consistent-hash rooms or use broker fan-out across gateways</li><li>Shard history by roomId</li><li>Separate presence traffic from messages</li></ul></div><div class="design-block"><h4>Failure scenarios</h4><ul><li>Reconnect repeats send</li><li>Gateway partition leaves ghost presence</li><li>Large room overwhelms fan-out</li></ul></div><div class="design-block"><h4>Bottlenecks</h4><ul><li>Mega-rooms, connection memory, slow clients</li></ul></div><div class="design-block"><h4>Trade-offs</h4><ul><li>Durable chat messages but lossy typing indicators</li><li>Server ordering adds a hop but creates a canonical sequence</li></ul></div><div class="design-block"><h4>Interview questions</h4><ul><li>How do clients fill gaps after reconnect?</li><li>How do you isolate slow consumers and mega-rooms?</li></ul></div>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+          
+          <div class="phase-nav"><a class="btn btn-ghost" href="10-queues.html">← Queues</a><a class="btn btn-primary" href="12-performance.html">Performance →</a></div>
+        </div>
+      </div>
+      <footer class="fine">Phase 11 · Node.js / TypeScript interview preparation</footer>
+    </main>
+  </div>
+  <script src="../assets/prep.js"></script>
+</body>
+</html>

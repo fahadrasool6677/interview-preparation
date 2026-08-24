@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Node.js Senior Interview Preparation — Roadmap &amp; Assessment</title>
+  <link rel="stylesheet" href="assets/prep.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" />
+</head>
+<body data-page="hub">
+  <div class="app">
+    <nav class="sidebar">
+      <h1>Node.js Interview Prep</h1>
+      <p class="tag">5-year · Backend / Full-stack · Senior track</p>
+      <div class="nav-group">Hub</div>
+      <button class="nav-btn active" data-panel="overview">Overview</button>
+      <button class="nav-btn" data-panel="roadmap">Roadmap</button>
+      <button class="nav-btn" data-panel="order">Study order</button>
+      <button class="nav-btn" data-panel="priority">Topic priority</button>
+      <button class="nav-btn" data-panel="plan30">30-day intensive</button>
+      <button class="nav-btn" data-panel="plan60">60-day relaxed</button>
+      <button class="nav-btn" data-panel="daily">Daily structure</button>
+      <button class="nav-btn" data-panel="assessment">Initial assessment</button>
+      <button class="nav-btn" data-panel="tracker">Progress tracker</button>
+      <div class="nav-group">Study phases</div>
+      <div id="phase-links">
+        <a class="nav-link" href="phases/01-javascript.html">01 JavaScript</a>
+        <a class="nav-link" href="phases/02-nodejs.html">02 Node.js</a>
+        <a class="nav-link" href="phases/03-typescript.html">03 TypeScript</a>
+        <a class="nav-link" href="phases/04-express.html">04 Express</a>
+        <a class="nav-link" href="phases/05-rest.html">05 REST APIs</a>
+        <a class="nav-link" href="phases/06-databases.html">06 Databases</a>
+        <a class="nav-link" href="phases/07-redis.html">07 Redis</a>
+        <a class="nav-link" href="phases/08-auth-security.html">08 Auth &amp; Security</a>
+        <a class="nav-link" href="phases/09-microservices.html">09 Microservices</a>
+        <a class="nav-link" href="phases/10-queues.html">10 Queues</a>
+        <a class="nav-link" href="phases/11-system-design.html">11 System Design</a>
+        <a class="nav-link" href="phases/12-performance.html">12 Performance</a>
+        <a class="nav-link" href="phases/13-docker.html">13 Docker &amp; Deploy</a>
+        <a class="nav-link" href="phases/14-testing.html">14 Testing</a>
+        <a class="nav-link" href="phases/15-coding.html">15 Coding</a>
+        <a class="nav-link" href="phases/16-projects.html">16 Projects</a>
+      </div>
+      <div class="meta">
+        Open a phase to study topic cards with running examples.<br />
+        Complete the assessment to customize focus areas.
+      </div>
+    </nav>
+
+    <main>
+      <section id="overview" class="panel active">
+        <p class="kicker">Study hub</p>
+        <header class="hero">
+          <h2>Roadmap, assessment, and 16 study phases</h2>
+          <p class="lead">
+            This plan is for a Node.js / TypeScript full-stack developer with about five years of experience.
+            Each phase page has full topic cards: concept, why, running examples, traps, interview questions, and exercises.
+            Start with the assessment or jump into <a href="phases/01-javascript.html">Phase 01 — JavaScript</a>.
+          </p>
+        </header>
+
+        <div class="grid-3">
+          <div class="stat"><b>16</b><span>full study phases with topic cards</span></div>
+          <div class="stat"><b>300+</b><span>topics, designs, and projects</span></div>
+          <div class="stat"><b>20</b><span>assessment questions to find weak areas</span></div>
+        </div>
+
+        <div class="card">
+          <h3>Jump into a phase</h3>
+          <p class="lead" style="margin-bottom:14px;font-size:0.92rem">Click any row to open that study page.</p>
+          <div class="phase-jump-grid">
+            <a class="phase-jump" href="phases/01-javascript.html"><strong>01 JavaScript</strong><span>event loop, async, closures</span></a>
+            <a class="phase-jump" href="phases/02-nodejs.html"><strong>02 Node.js</strong><span>libuv, streams, workers</span></a>
+            <a class="phase-jump" href="phases/03-typescript.html"><strong>03 TypeScript</strong><span>narrowing, Zod, APIs</span></a>
+            <a class="phase-jump" href="phases/04-express.html"><strong>04 Express</strong><span>layers, middleware, jobs</span></a>
+            <a class="phase-jump" href="phases/05-rest.html"><strong>05 REST</strong><span>HTTP, idempotency, auth tokens</span></a>
+            <a class="phase-jump" href="phases/06-databases.html"><strong>06 Databases</strong><span>Postgres + Prisma</span></a>
+            <a class="phase-jump" href="phases/07-redis.html"><strong>07 Redis</strong><span>cache, locks, stampede</span></a>
+            <a class="phase-jump" href="phases/08-auth-security.html"><strong>08 Auth &amp; security</strong><span>JWT, OAuth, attacks</span></a>
+            <a class="phase-jump" href="phases/09-microservices.html"><strong>09 Microservices</strong><span>sagas, when not to split</span></a>
+            <a class="phase-jump" href="phases/10-queues.html"><strong>10 Queues</strong><span>delivery semantics, order pipeline</span></a>
+            <a class="phase-jump" href="phases/11-system-design.html"><strong>11 System design</strong><span>method + 10 problems</span></a>
+            <a class="phase-jump" href="phases/12-performance.html"><strong>12 Performance</strong><span>incidents and runbooks</span></a>
+            <a class="phase-jump" href="phases/13-docker.html"><strong>13 Docker &amp; deploy</strong><span>images, Nginx, CI</span></a>
+            <a class="phase-jump" href="phases/14-testing.html"><strong>14 Testing</strong><span>Jest, mocks, async</span></a>
+            <a class="phase-jump" href="phases/15-coding.html"><strong>15 Coding</strong><span>DSA + runnable JS utils</span></a>
+            <a class="phase-jump" href="phases/16-projects.html"><strong>16 Projects</strong><span>six capstone systems</span></a>
+          </div>
+        </div>
+
+        <div class="note">
+          Prefer: take the assessment, then study High-priority phases first (JS, Node, REST, Postgres, Auth, Redis, Debug, System Design). Mark topics reviewed on each phase page — progress is stored in this browser. Weak areas below 7/10 get extra reps.
+          <br /><br />
+          <strong>If phase links do nothing in the IDE preview:</strong> open the site over HTTP instead of <code>file://</code> —
+          <a href="http://127.0.0.1:8765/nodejs-interview-preparation.html"><code>http://127.0.0.1:8765/nodejs-interview-preparation.html</code></a>
+          (run <code>python3 -m http.server 8765</code> from this folder if needed).
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <h3>What this artifact contains</h3>
+            <ol class="order">
+              <li>Complete 16-phase roadmap (linked to study pages)</li>
+              <li>Full topic cards per phase: concept, why, example, traps, Q&amp;A, exercise</li>
+              <li>Recommended study order and High / Medium / Low priority</li>
+              <li>30-day intensive and 60-day relaxed plans</li>
+              <li>Daily session template</li>
+              <li>20-question initial assessment form</li>
+              <li>Progress tracker (hub + per-topic checkboxes)</li>
+            </ol>
+          </div>
+          <div class="card">
+            <h3>Interview types this plan covers</h3>
+            <ul>
+              <li>Node.js backend developer</li>
+              <li>Full-stack (Node + React/Next.js)</li>
+              <li>Senior Node.js / staff-adjacent discussions</li>
+              <li>System design</li>
+              <li>Coding / problem-solving</li>
+              <li>Production debugging and architecture reviews</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section id="roadmap" class="panel">
+        <p class="kicker">Complete roadmap</p>
+        <header class="hero">
+          <h2>Sixteen phases from revision to mock interviews</h2>
+          <p class="lead">Each phase is interview-shaped: concept, why it works that way, a production example, common traps, then senior follow-ups. Teaching content comes after the assessment.</p>
+        </header>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Phase</th>
+              <th>Focus</th>
+              <th>What “done” looks like in an interview</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><a href="phases/01-javascript.html"><span class="badge phase">01</span> JavaScript</a></td>
+              <td>Event loop, async, closures, <code>this</code>, prototypes, memory, FP habits</td>
+              <td>You can narrate microtasks vs macrotasks and catch event-loop blocking without hand-waving.</td>
+            </tr>
+            <tr>
+              <td><a href="phases/02-nodejs.html"><span class="badge phase">02</span> Node.js</a></td>
+              <td>V8, libuv, streams, cluster, workers, shutdown, leaks, profiling</td>
+              <td>You can walk a request from socket to response and say when Node is the wrong tool.</td>
+            </tr>
+            <tr>
+              <td><a href="phases/03-typescript.html"><span class="badge phase">03</span> TypeScript</a></td>
+              <td>Narrowing, unions, generics, infer, API typing, Zod, tsconfig</td>
+              <td>You type real services, not toy examples, and know where types stop and runtime begins.</td>
+            </tr>
+            <tr>
+              <td><a href="phases/04-express.html"><span class="badge phase">04</span> Express architecture</a></td>
+              <td>Middleware, layers, DI, validation, versioning, jobs, uploads</td>
+              <td>You can contrast a messy controller dump with a production layout and defend the split.</td>
+            </tr>
+            <tr>
+              <td><a href="phases/05-rest.html"><span class="badge phase">05</span> REST APIs</a></td>
+              <td>HTTP semantics, auth tokens, idempotency, pagination, CORS/CSRF</td>
+              <td>You design an order API with duplicate-payment protection, not just CRUD verbs.</td>
+            </tr>
+            <tr>
+              <td><a href="phases/06-databases.html"><span class="badge phase">06</span> Databases</a></td>
+              <td>Postgres (SQL, indexes, isolation, EXPLAIN), Prisma, N+1</td>
+              <td>You pick isolation, indexes, and pooling like someone who has been paged at 2am.</td>
+            </tr>
+            <tr>
+              <td><a href="phases/07-redis.html"><span class="badge phase">07</span> Redis &amp; caching</a></td>
+              <td>Patterns, TTL, stampede, locks, sessions, Pub/Sub</td>
+              <td>You cache an expensive read without serving stale money or thundering the DB.</td>
+            </tr>
+            <tr>
+              <td><a href="phases/08-auth-security.html"><span class="badge phase">08</span> Auth &amp; security</a></td>
+              <td>JWT/OAuth/OIDC, hashing, RBAC, XSS/SQLi/SSRF, secrets, TLS</td>
+              <td>You describe a real attack path and the control that actually stops it.</td>
+            </tr>
+            <tr>
+              <td><a href="phases/09-microservices.html"><span class="badge phase">09</span> Microservices</a></td>
+              <td>Boundaries, sync vs async, sagas, retries, observability</td>
+              <td>You can argue for a modular monolith when microservices would be theater.</td>
+            </tr>
+            <tr>
+              <td><a href="phases/10-queues.html"><span class="badge phase">10</span> Queues &amp; events</a></td>
+              <td>Delivery guarantees, DLQ, ordering, idempotent consumers</td>
+              <td>You design Order Created → payment → inventory → notify without double-charging.</td>
+            </tr>
+            <tr>
+              <td><a href="phases/11-system-design.html"><span class="badge phase">11</span> System design</a></td>
+              <td>Requirements, CAP, LB, cache, storage, 10 classic designs</td>
+              <td>You gather NFRs first, then APIs, schema, scale, failure, and trade-offs.</td>
+            </tr>
+            <tr>
+              <td><a href="phases/12-performance.html"><span class="badge phase">12</span> Performance &amp; debug</a></td>
+              <td>Slow APIs, CPU/memory, pools, N+1, retry storms, deadlocks</td>
+              <td>You debug “500ms → 10s” as a process, not a guess list.</td>
+            </tr>
+            <tr>
+              <td><a href="phases/13-docker.html"><span class="badge phase">13</span> Docker &amp; deploy</a></td>
+              <td>Images, Compose, multi-stage, Nginx, PM2, CI/CD, HTTPS</td>
+              <td>You ship a Node service with sane env, health checks, and a reverse proxy.</td>
+            </tr>
+            <tr>
+              <td><a href="phases/14-testing.html"><span class="badge phase">14</span> Testing</a></td>
+              <td>Unit vs integration vs e2e, Jest, mocks, async, DB tests</td>
+              <td>You know what not to mock — especially I/O you actually own.</td>
+            </tr>
+            <tr>
+              <td><a href="phases/15-coding.html"><span class="badge phase">15</span> Coding rounds</a></td>
+              <td>Medium→hard DSA + backend JS (retry, limiter, Promise.all, clone)</td>
+              <td>You talk complexity and edge cases while writing readable TypeScript.</td>
+            </tr>
+            <tr>
+              <td><a href="phases/16-projects.html"><span class="badge phase">16</span> Backend projects</a></td>
+              <td>REST API, auth, orders, webhooks, notifications, product sync</td>
+              <td>You can walk an interviewer through architecture, failure, and scale of something you built.</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="order" class="panel">
+        <p class="kicker">Recommended study order</p>
+        <header class="hero">
+          <h2>Order is interview-weighted, not course-catalog order</h2>
+          <p class="lead">Senior Node interviews fail people on async internals, HTTP/data correctness, SQL, and design — not on knowing every TS utility type. This sequence front-loads what gets asked first and hardest.</p>
+        </header>
+
+        <div class="card">
+          <h3>Default sequence (before assessment customization)</h3>
+          <ol class="order">
+            <li><strong>JavaScript deep revision</strong> — everything else is built on the event loop and async mental model.</li>
+            <li><strong>Node.js internals</strong> — the role’s core; request path, blocking, workers, shutdown.</li>
+            <li><strong>REST + HTTP + Express architecture</strong> — this is most of the “backend” onsite.</li>
+            <li><strong>PostgreSQL + Prisma</strong> — correctness and performance; Prisma is a tool, SQL is the interview.</li>
+            <li><strong>Auth &amp; security</strong> — expected at senior level; shallow JWT answers get follow-ups.</li>
+            <li><strong>Redis &amp; caching</strong> — almost every scale discussion lands here.</li>
+            <li><strong>Performance &amp; production debugging</strong> — how seniors actually sound.</li>
+            <li><strong>TypeScript (intermediate → advanced)</strong> — after runtime fluency; type-level depth is a plus, not the gate.</li>
+            <li><strong>Queues, Pub/Sub, event-driven flows</strong> — needed for “order placed” designs.</li>
+            <li><strong>Microservices &amp; sagas</strong> — after you can design a solid modular service.</li>
+            <li><strong>System design (progressive, then 10 problems)</strong> — uses all of the above as vocabulary.</li>
+            <li><strong>Coding interview (backend-flavored + DSA)</strong> — parallel after week 1, not instead of Node.</li>
+            <li><strong>Docker, deploy, CI</strong> — enough to be credible; not a cloud-cert track.</li>
+            <li><strong>Testing strategy</strong> — after you have code and APIs to test.</li>
+            <li><strong>Capstone projects / story bank</strong> — turn revision into interview narratives.</li>
+          </ol>
+        </div>
+
+        <div class="note">
+          After the assessment: any topic you score below 7/10 moves up and gets extra daily quiz + a second pass. Coding stays a daily 30–60 minutes even when the “phase” is later.
+        </div>
+      </section>
+
+      <section id="priority" class="panel">
+        <p class="kicker">Topic priority</p>
+        <header class="hero">
+          <h2>High / Medium / Low for Node and senior backend interviews</h2>
+          <p class="lead">Low does not mean “skip forever”. It means do not spend week 1 there unless the assessment shows a hole.</p>
+        </header>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Priority</th>
+              <th>Topics</th>
+              <th>Why</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge high">High</span></td>
+              <td>Event loop &amp; async JS, Node architecture, HTTP/REST, Express structure, Postgres (indexes, transactions, isolation), auth (JWT/session/OAuth at a practical level), caching, idempotency, error handling, debugging slow/broken APIs, system design fundamentals, medium coding (hash maps, two pointers, trees as needed)</td>
+              <td>These decide offers. Interviewers probe until they find the edge of your model.</td>
+            </tr>
+            <tr>
+              <td><span class="badge med">Medium</span></td>
+              <td>TypeScript advanced types, Prisma performance, Redis locks/Pub/Sub, queues &amp; delivery semantics, RBAC design, rate limiting, pagination (cursor), Docker/Nginx/CI, Jest strategy, worker threads vs cluster, GraphQL (if the company uses it)</td>
+              <td>Expected at senior; you need clean answers, not encyclopedia depth on day 1.</td>
+            </tr>
+            <tr>
+              <td><span class="badge low">Low</span></td>
+              <td>Generators, Symbols, WeakMap trivia, every mapped/conditional type, gRPC internals, Kubernetes deep dive, 2PC theory without saga practice, exotic FP, covering 100% of DSA patterns</td>
+              <td>Nice if asked; a weak event-loop answer costs more than a missing <code>infer</code> example.</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="plan30" class="panel">
+        <p class="kicker">30-day intensive</p>
+        <header class="hero">
+          <h2>~2.5–3.5 hours per day, six days a week</h2>
+          <p class="lead">Built for an upcoming interview window. Day 7 each week is a lighter review or mock, not a new dump of content. Coding practice runs in parallel from day 1.</p>
+        </header>
+
+        <div class="card">
+          <h3>Daily template (locked for 30 days)</h3>
+          <div class="session"><strong>Concept</strong><span>30–45 min — one High topic, “why” first</span></div>
+          <div class="session"><strong>Practical coding</strong><span>30–60 min — Node/TS exercise or DSA</span></div>
+          <div class="session"><strong>Interview Qs</strong><span>20–30 min — answer out loud, then refine</span></div>
+          <div class="session"><strong>System design</strong><span>20–30 min — one slice (API, schema, or failure)</span></div>
+          <div class="session"><strong>Quiz</strong><span>5–10 questions — same day’s topic</span></div>
+          <div class="session"><strong>Review</strong><span>note weak areas; anything fuzzy is tomorrow’s opener</span></div>
+        </div>
+
+        <h3 class="week-title">Days 1–7 — Language and runtime</h3>
+        <div class="day-grid">
+          <div class="day"><div class="when">Day 1</div><div>JS: execution context, stack, event loop phases, micro vs macro</div><div class="hours">High · 3h</div></div>
+          <div class="day"><div class="when">Day 2</div><div>JS: promises, async/await, error propagation, common race mistakes</div><div class="hours">High · 3h</div></div>
+          <div class="day"><div class="when">Day 3</div><div>JS: closures, scope, <code>this</code>, prototypes vs classes; coding: debounce/throttle</div><div class="hours">High · 3h</div></div>
+          <div class="day"><div class="when">Day 4</div><div>Node: V8, libuv, 10k concurrent requests, blocking vs I/O</div><div class="hours">High · 3.5h</div></div>
+          <div class="day"><div class="when">Day 5</div><div>Node: streams, buffers, EventEmitter, cluster vs workers vs child process</div><div class="hours">High · 3h</div></div>
+          <div class="day"><div class="when">Day 6</div><div>Node: signals, graceful shutdown, leaks, profiling intro</div><div class="hours">High · 3h</div></div>
+          <div class="day"><div class="when">Day 7</div><div>Mock: “trace an HTTP request”; coding: retry + concurrency limiter</div><div class="hours">Review · 2.5h</div></div>
+        </div>
+
+        <h3 class="week-title">Days 8–14 — APIs, data, auth</h3>
+        <div class="day-grid">
+          <div class="day"><div class="when">Day 8</div><div>Express: middleware, layers, errors, config, logging — bad vs good architecture</div><div class="hours">High · 3h</div></div>
+          <div class="day"><div class="when">Day 9</div><div>REST: methods, status, headers, versioning, pagination, idempotency</div><div class="hours">High · 3h</div></div>
+          <div class="day"><div class="when">Day 10</div><div>Design: e-commerce order API + duplicate payment prevention</div><div class="hours">High · 3.5h</div></div>
+          <div class="day"><div class="when">Day 11</div><div>Postgres: joins, CTE, transactions, isolation, locks</div><div class="hours">High · 3.5h</div></div>
+          <div class="day"><div class="when">Day 12</div><div>Postgres: indexes, EXPLAIN, pooling; Prisma N+1 and when to use raw SQL</div><div class="hours">High · 3h</div></div>
+          <div class="day"><div class="when">Day 13</div><div>Auth: sessions vs JWT, refresh, OAuth/OIDC sketch, password hashing, RBAC</div><div class="hours">High · 3h</div></div>
+          <div class="day"><div class="when">Day 14</div><div>Security: XSS, CSRF, SQLi, SSRF, cookies, rate limit; mock public-API hardening</div><div class="hours">High · 3h</div></div>
+        </div>
+
+        <h3 class="week-title">Days 15–21 — Scale vocabulary</h3>
+        <div class="day-grid">
+          <div class="day"><div class="when">Day 15</div><div>Redis: cache-aside, TTL, stampede, distributed lock</div><div class="hours">High · 3h</div></div>
+          <div class="day"><div class="when">Day 16</div><div>Queues: at-least-once, idempotent consumers, DLQ, order pipeline</div><div class="hours">Med · 3h</div></div>
+          <div class="day"><div class="when">Day 17</div><div>Microservices: boundaries, saga vs distributed transaction, when not to split</div><div class="hours">Med · 3h</div></div>
+          <div class="day"><div class="when">Day 18</div><div>TypeScript: narrowing, unions, generics, unknown vs any, Zod at the boundary</div><div class="hours">Med · 3h</div></div>
+          <div class="day"><div class="when">Day 19</div><div>System design method: FR/NFR, CAP, LB, cache, DB scale — URL shortener full pass</div><div class="hours">High · 3.5h</div></div>
+          <div class="day"><div class="when">Day 20</div><div>Design: notifications + webhooks</div><div class="hours">High · 3h</div></div>
+          <div class="day"><div class="when">Day 21</div><div>Design: e-commerce or payments (pick one); failure modes and bottlenecks</div><div class="hours">High · 3.5h</div></div>
+        </div>
+
+        <h3 class="week-title">Days 22–30 — Production, coding, mocks</h3>
+        <div class="day-grid">
+          <div class="day"><div class="when">Day 22</div><div>Debug drills: 500ms → 10s, pool exhaustion, retry storms</div><div class="hours">High · 3h</div></div>
+          <div class="day"><div class="when">Day 23</div><div>Docker multi-stage, Compose, Nginx, env, health checks, CI sketch</div><div class="hours">Med · 2.5h</div></div>
+          <div class="day"><div class="when">Day 24</div><div>Testing: what to mock; API + DB integration pattern</div><div class="hours">Med · 2.5h</div></div>
+          <div class="day"><div class="when">Day 25</div><div>Coding: Promise.all, event emitter, LRU/cache, rate limiter</div><div class="hours">High · 3h</div></div>
+          <div class="day"><div class="when">Day 26</div><div>DSA: sliding window, graphs or trees (one hard), talk-aloud practice</div><div class="hours">High · 3h</div></div>
+          <div class="day"><div class="when">Day 27</div><div>Design: chat or file upload; plus product-sync sketch</div><div class="hours">High · 3h</div></div>
+          <div class="day"><div class="when">Day 28</div><div>Full mock interview (60–90 min): Node deep-dive + one design</div><div class="hours">Interview · 3h</div></div>
+          <div class="day"><div class="when">Day 29</div><div>Weak-area only (anything scored &lt; 7). Rebuild those answers.</div><div class="hours">Custom · 3h</div></div>
+          <div class="day"><div class="when">Day 30</div><div>Second mock + story bank: 3 production incidents you can tell in 3 minutes each</div><div class="hours">Interview · 3h</div></div>
+        </div>
+      </section>
+
+      <section id="plan60" class="panel">
+        <p class="kicker">60-day relaxed</p>
+        <header class="hero">
+          <h2>~1.5–2 hours per day, with one deeper weekend block</h2>
+          <p class="lead">Same destination as the 30-day plan, half the daily load, more spaced repetition. Use this if you are working full-time.</p>
+        </header>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Days</th>
+              <th>Focus</th>
+              <th>Weekend block</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>1–8</td><td>JavaScript (loop, async, closures, this, memory). Daily coding 30 min.</td><td>Implement debounce, throttle, deep clone; explain GC vs leaks.</td></tr>
+            <tr><td>9–16</td><td>Node internals, streams, workers, shutdown, leaks.</td><td>Write the “HTTP request lifecycle” answer until it is crisp.</td></tr>
+            <tr><td>17–22</td><td>Express architecture + REST (idempotency, pagination, errors).</td><td>Order API design on paper; compare bad vs good module layout.</td></tr>
+            <tr><td>23–30</td><td>Postgres + Prisma (isolation, indexes, EXPLAIN, N+1, pooling).</td><td>SQL exercises + one slow-query story.</td></tr>
+            <tr><td>31–36</td><td>Auth, OAuth sketch, hashing, RBAC, OWASP-style Node attacks.</td><td>Secure a public API: list threats and controls.</td></tr>
+            <tr><td>37–42</td><td>Redis, stampede, locks; then queues, DLQ, idempotent consumers.</td><td>Order-created pipeline on a whiteboard.</td></tr>
+            <tr><td>43–46</td><td>TypeScript at the service boundary (unions, generics, Zod).</td><td>Type a small API module properly.</td></tr>
+            <tr><td>47–48</td><td>Microservices: when not to, sagas, retries.</td><td>Modular monolith vs services for a domain you know.</td></tr>
+            <tr><td>49–54</td><td>System design: method + URL shortener, notifications, e-commerce, chat (one per two days).</td><td>Timed 45-minute design.</td></tr>
+            <tr><td>55–56</td><td>Debug + performance incidents.</td><td>500ms → 10s written runbook.</td></tr>
+            <tr><td>57–58</td><td>Docker/CI + testing strategy.</td><td>Dockerfile review of a real app.</td></tr>
+            <tr><td>59–60</td><td>Coding polish + two mock interviews + weak-area pass.</td><td>Story bank of production work.</td></tr>
+          </tbody>
+        </table>
+
+        <div class="note">
+          If energy is low, protect High topics (JS, Node, REST, Postgres, auth, design) and shrink Medium/Low. Do not “catch up” by skipping the quiz and review — that is how five-year knowledge stays fuzzy.
+        </div>
+      </section>
+
+      <section id="daily" class="panel">
+        <p class="kicker">How to study</p>
+        <header class="hero">
+          <h2>Each session has the same six moves</h2>
+          <p class="lead">Interviews reward spoken structure. Practice answering in this shape: definition → why → production example → trade-off → follow-up you expect.</p>
+        </header>
+
+        <div class="grid-2">
+          <div class="card">
+            <h3>How to speak an answer</h3>
+            <ol class="order">
+              <li>One-sentence claim.</li>
+              <li>Mechanism (event loop, index, token, queue — the actual why).</li>
+              <li>A real scenario (orders, webhooks, cache, pool).</li>
+              <li>Failure mode and how you would detect it.</li>
+              <li>Trade-off versus the obvious alternative.</li>
+            </ol>
+          </div>
+          <div class="card">
+            <h3>Scoring (used after each topic)</h3>
+            <p>1–10 on correctness, depth, practical instinct, communication, senior judgment. Below 7: that topic returns to the tracker as <strong>Weak</strong> and is first tomorrow.</p>
+            <p>Interview mode later: one question at a time, no instant answer key.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="assessment" class="panel">
+        <p class="kicker">Initial assessment</p>
+        <header class="hero">
+          <h2>Twenty questions to locate your current level</h2>
+          <p class="lead">
+            Answer as you would in a senior interview: short enough to say in 2–4 minutes, specific enough to be wrong. Do not look up answers. Rate confidence honestly. There is no answer key on this page.
+          </p>
+        </header>
+
+        <div class="note">
+          After you submit, use “Copy answers for chat” and paste into this conversation. Weak areas will be used to reorder the roadmap. Skip blanks only if you truly would freeze in an interview — that is still useful data.
+        </div>
+
+        <form id="assess-form">
+          <!-- questions injected / static -->
+          <article class="question" data-topic="JavaScript">
+            <div class="qhead">
+              <div class="qnum">1. Event loop order</div>
+              <span class="badge high">High · JS</span>
+            </div>
+            <p>For this snippet, state the print order and <em>why</em> (which queues). Then say what would change on the Node event-loop if the <code>then</code> callback did a 200ms CPU spin.</p>
+            <pre style="white-space:pre-wrap;background:#f6f1e8;padding:12px;border-radius:8px;font-size:0.85rem;">console.log('A');
+setTimeout(() => console.log('B'), 0);
+Promise.resolve().then(() => console.log('C'));
+setImmediate(() => console.log('D'));
+console.log('E');</pre>
+            <div class="confidence">Confidence:
+              <label><input type="radio" name="c1" value="1" /> 1</label>
+              <label><input type="radio" name="c1" value="2" /> 2</label>
+              <label><input type="radio" name="c1" value="3" /> 3</label>
+              <label><input type="radio" name="c1" value="4" /> 4</label>
+              <label><input type="radio" name="c1" value="5" /> 5</label>
+            </div>
+            <textarea name="a1" placeholder="Order + why + CPU-spin effect"></textarea>
+          </article>
+
+          <article class="question" data-topic="Node.js">
+            <div class="qhead"><div class="qnum">2. Request path</div><span class="badge high">High · Node</span></div>
+            <p>Walk through what happens inside Node from “TCP data arrives for an HTTP request” to “response bytes leave”, including libuv and the JS event loop. Where does your Express middleware actually run?</p>
+            <div class="confidence">Confidence:
+              <label><input type="radio" name="c2" value="1" /> 1</label>
+              <label><input type="radio" name="c2" value="2" /> 2</label>
+              <label><input type="radio" name="c2" value="3" /> 3</label>
+              <label><input type="radio" name="c2" value="4" /> 4</label>
+              <label><input type="radio" name="c2" value="5" /> 5</label>
+            </div>
+            <textarea name="a2"></textarea>
+          </article>
+
+          <article class="question" data-topic="Node.js">
+            <div class="qhead"><div class="qnum">3. 10,000 concurrent requests</div><span class="badge high">High · Node</span></div>
+            <p>How does Node hold 10k open connections without 10k OS threads doing JS? When does this story break (CPU, GC, pool size, downstream latency)?</p>
+            <div class="confidence">Confidence:
+              <label><input type="radio" name="c3" value="1" /> 1</label>
+              <label><input type="radio" name="c3" value="2" /> 2</label>
+              <label><input type="radio" name="c3" value="3" /> 3</label>
+              <label><input type="radio" name="c3" value="4" /> 4</label>
+              <label><input type="radio" name="c3" value="5" /> 5</label>
+            </div>
+            <textarea name="a3"></textarea>
+          </article>
+
+          <article class="question" data-topic="Node.js">
+            <div class="qhead"><div class="qnum">4. CPU vs I/O</div><span class="badge high">High · Node</span></div>
+            <p>You must resize images and also call three HTTP APIs. Compare: block the event loop, <code>worker_threads</code>, child process, offload to a queue + worker pool. What do you choose and why?</p>
+            <div class="confidence">Confidence:
+              <label><input type="radio" name="c4" value="1" /> 1</label>
+              <label><input type="radio" name="c4" value="2" /> 2</label>
+              <label><input type="radio" name="c4" value="3" /> 3</label>
+              <label><input type="radio" name="c4" value="4" /> 4</label>
+              <label><input type="radio" name="c4" value="5" /> 5</label>
+            </div>
+            <textarea name="a4"></textarea>
+          </article>
+
+          <article class="question" data-topic="TypeScript">
+            <div class="qhead"><div class="qnum">5. Types at the boundary</div><span class="badge med">Medium · TS</span></div>
+            <p>When do you use <code>interface</code> vs <code>type</code>? When is <code>unknown</code> correct and <code>any</code> a bug? How do you keep a Prisma/Express handler type-safe if the request body is untrusted JSON?</p>
+            <div class="confidence">Confidence:
+              <label><input type="radio" name="c5" value="1" /> 1</label>
+              <label><input type="radio" name="c5" value="2" /> 2</label>
+              <label><input type="radio" name="c5" value="3" /> 3</label>
+              <label><input type="radio" name="c5" value="4" /> 4</label>
+              <label><input type="radio" name="c5" value="5" /> 5</label>
+            </div>
+            <textarea name="a5"></textarea>
+          </article>
+
+          <article class="question" data-topic="Express">
+            <div class="qhead"><div class="qnum">6. Production architecture</div><span class="badge high">High · Express</span></div>
+            <p>Sketch a production Node API layout (folders/layers). Where do transactions live? How do errors reach a client without leaking stacks? What is a smell that “service” is just a second controller?</p>
+            <div class="confidence">Confidence:
+              <label><input type="radio" name="c6" value="1" /> 1</label>
+              <label><input type="radio" name="c6" value="2" /> 2</label>
+              <label><input type="radio" name="c6" value="3" /> 3</label>
+              <label><input type="radio" name="c6" value="4" /> 4</label>
+              <label><input type="radio" name="c6" value="5" /> 5</label>
+            </div>
+            <textarea name="a6"></textarea>
+          </article>
+
+          <article class="question" data-topic="REST">
+            <div class="qhead"><div class="qnum">7. Order API</div><span class="badge high">High · REST</span></div>
+            <p>Design HTTP APIs for placing an order (create, pay, cancel, get). Include status codes, idempotency keys, and what you return if payment is retried. Do not write a novel — interview-length.</p>
+            <div class="confidence">Confidence:
+              <label><input type="radio" name="c7" value="1" /> 1</label>
+              <label><input type="radio" name="c7" value="2" /> 2</label>
+              <label><input type="radio" name="c7" value="3" /> 3</label>
+              <label><input type="radio" name="c7" value="4" /> 4</label>
+              <label><input type="radio" name="c7" value="5" /> 5</label>
+            </div>
+            <textarea name="a7"></textarea>
+          </article>
+
+          <article class="question" data-topic="REST">
+            <div class="qhead"><div class="qnum">8. Duplicate payments</div><span class="badge high">High · REST</span></div>
+            <p>A client double-submits “pay order 99” because of a timeout. How do you prevent double charge at API, DB, and (if used) queue consumer? Name the failure if you only “check then insert” without a unique constraint.</p>
+            <div class="confidence">Confidence:
+              <label><input type="radio" name="c8" value="1" /> 1</label>
+              <label><input type="radio" name="c8" value="2" /> 2</label>
+              <label><input type="radio" name="c8" value="3" /> 3</label>
+              <label><input type="radio" name="c8" value="4" /> 4</label>
+              <label><input type="radio" name="c8" value="5" /> 5</label>
+            </div>
+            <textarea name="a8"></textarea>
+          </article>
+
+          <article class="question" data-topic="PostgreSQL">
+            <div class="qhead"><div class="qnum">9. Isolation</div><span class="badge high">High · Postgres</span></div>
+            <p>You debit a wallet. Contrast Read Committed vs Repeatable Read vs Serializable for lost updates. What lock or constraint would you actually use in production?</p>
+            <div class="confidence">Confidence:
+              <label><input type="radio" name="c9" value="1" /> 1</label>
+              <label><input type="radio" name="c9" value="2" /> 2</label>
+              <label><input type="radio" name="c9" value="3" /> 3</label>
+              <label><input type="radio" name="c9" value="4" /> 4</label>
+              <label><input type="radio" name="c9" value="5" /> 5</label>
+            </div>
+            <textarea name="a9"></textarea>
+          </article>
+
+          <article class="question" data-topic="Prisma">
+            <div class="qhead"><div class="qnum">10. N+1</div><span class="badge high">High · Prisma</span></div>
+            <p>Describe an N+1 you have seen (or a realistic one) with Prisma. How do you confirm it, fix it, and when is raw SQL the honest choice?</p>
+            <div class="confidence">Confidence:
+              <label><input type="radio" name="c10" value="1" /> 1</label>
+              <label><input type="radio" name="c10" value="2" /> 2</label>
+              <label><input type="radio" name="c10" value="3" /> 3</label>
+              <label><input type="radio" name="c10" value="4" /> 4</label>
+              <label><input type="radio" name="c10" value="5" /> 5</label>
+            </div>
+            <textarea name="a10"></textarea>
+          </article>
+
+          <article class="question" data-topic="Redis">
+            <div class="qhead"><div class="qnum">11. Cache stampede</div><span class="badge high">High · Redis</span></div>
+            <p>An expensive product API is cached 60s. Key expires at a traffic spike. What happens, and how do you prevent stampede (lock, probabilistic early expire, singleflight, stale-while-revalidate)? What must never be cached the same way as a product title?</p>
+            <div class="confidence">Confidence:
+              <label><input type="radio" name="c11" value="1" /> 1</label>
+              <label><input type="radio" name="c11" value="2" /> 2</label>
+              <label><input type="radio" name="c11" value="3" /> 3</label>
+              <label><input type="radio" name="c11" value="4" /> 4</label>
+              <label><input type="radio" name="c11" value="5" /> 5</label>
+            </div>
+            <textarea name="a11"></textarea>
+          </article>
+
+          <article class="question" data-topic="Auth">
+            <div class="qhead"><div class="qnum">12. JWT vs session</div><span class="badge high">High · Auth</span></div>
+            <p>SPA + Node API: access + refresh tokens vs server session. Logout, theft of a token, and rotation. What goes in the cookie flags?</p>
+            <div class="confidence">Confidence:
+              <label><input type="radio" name="c12" value="1" /> 1</label>
+              <label><input type="radio" name="c12" value="2" /> 2</label>
+              <label><input type="radio" name="c12" value="3" /> 3</label>
+              <label><input type="radio" name="c12" value="4" /> 4</label>
+              <label><input type="radio" name="c12" value="5" /> 5</label>
+            </div>
+            <textarea name="a12"></textarea>
+          </article>
+
+          <article class="question" data-topic="Security">
+            <div class="qhead"><div class="qnum">13. Public API hardening</div><span class="badge high">High · Security</span></div>
+            <p>You expose a public REST API. List the top threats you would actually budget for (not a dump of the OWASP name list) and one concrete control each. Include SSRF if the API fetches user-supplied URLs.</p>
+            <div class="confidence">Confidence:
+              <label><input type="radio" name="c13" value="1" /> 1</label>
+              <label><input type="radio" name="c13" value="2" /> 2</label>
+              <label><input type="radio" name="c13" value="3" /> 3</label>
+              <label><input type="radio" name="c13" value="4" /> 4</label>
+              <label><input type="radio" name="c13" value="5" /> 5</label>
+            </div>
+            <textarea name="a13"></textarea>
+          </article>
+
+          <article class="question" data-topic="Queues">
+            <div class="qhead"><div class="qnum">14. Delivery semantics</div><span class="badge med">Medium · Queues</span></div>
+            <p>Order Created is published. Payment, inventory, notify consume it. Why is exactly-once usually a lie? How does an idempotent consumer look? What is the DLQ for?</p>
+            <div class="confidence">Confidence:
+              <label><input type="radio" name="c14" value="1" /> 1</label>
+              <label><input type="radio" name="c14" value="2" /> 2</label>
+              <label><input type="radio" name="c14" value="3" /> 3</label>
+              <label><input type="radio" name="c14" value="4" /> 4</label>
+              <label><input type="radio" name="c14" value="5" /> 5</label>
+            </div>
+            <textarea name="a14"></textarea>
+          </article>
+
+          <article class="question" data-topic="Microservices">
+            <div class="qhead"><div class="qnum">15. Saga vs split</div><span class="badge med">Medium · Services</span></div>
+            <p>When are microservices a bad idea for a 5-person team? If you still split order / payment / inventory, how do you handle a payment success + inventory fail without 2PC?</p>
+            <div class="confidence">Confidence:
+              <label><input type="radio" name="c15" value="1" /> 1</label>
+              <label><input type="radio" name="c15" value="2" /> 2</label>
+              <label><input type="radio" name="c15" value="3" /> 3</label>
+              <label><input type="radio" name="c15" value="4" /> 4</label>
+              <label><input type="radio" name="c15" value="5" /> 5</label>
+            </div>
+            <textarea name="a15"></textarea>
+          </article>
+
+          <article class="question" data-topic="System Design">
+            <div class="qhead"><div class="qnum">16. URL shortener</div><span class="badge high">High · Design</span></div>
+            <p>45-minute design: functional + non-functional requirements, API, schema, hash collisions, redirect path at high QPS, what you cache, what fails. Write the outline you would say out loud.</p>
+            <div class="confidence">Confidence:
+              <label><input type="radio" name="c16" value="1" /> 1</label>
+              <label><input type="radio" name="c16" value="2" /> 2</label>
+              <label><input type="radio" name="c16" value="3" /> 3</label>
+              <label><input type="radio" name="c16" value="4" /> 4</label>
+              <label><input type="radio" name="c16" value="5" /> 5</label>
+            </div>
+            <textarea name="a16" style="min-height:140px"></textarea>
+          </article>
+
+          <article class="question" data-topic="Debugging">
+            <div class="qhead"><div class="qnum">17. Latency incident</div><span class="badge high">High · Debug</span></div>
+            <p>p50 was 500ms; now p99 is 10s (p50 maybe still fine). Step-by-step: what you look at first, what you rule out, how you tell event-loop block vs DB vs downstream vs pool exhaustion vs GC. No tool-name dump without purpose.</p>
+            <div class="confidence">Confidence:
+              <label><input type="radio" name="c17" value="1" /> 1</label>
+              <label><input type="radio" name="c17" value="2" /> 2</label>
+              <label><input type="radio" name="c17" value="3" /> 3</label>
+              <label><input type="radio" name="c17" value="4" /> 4</label>
+              <label><input type="radio" name="c17" value="5" /> 5</label>
+            </div>
+            <textarea name="a17"></textarea>
+          </article>
+
+          <article class="question" data-topic="Testing">
+            <div class="qhead"><div class="qnum">18. Mocking</div><span class="badge med">Medium · Test</span></div>
+            <p>For an order service that talks to Postgres, Stripe, and Redis: what do you mock in unit tests, what do you use a testcontainer/local for, and what is a false-green test you have seen (or can invent)?</p>
+            <div class="confidence">Confidence:
+              <label><input type="radio" name="c18" value="1" /> 1</label>
+              <label><input type="radio" name="c18" value="2" /> 2</label>
+              <label><input type="radio" name="c18" value="3" /> 3</label>
+              <label><input type="radio" name="c18" value="4" /> 4</label>
+              <label><input type="radio" name="c18" value="5" /> 5</label>
+            </div>
+            <textarea name="a18"></textarea>
+          </article>
+
+          <article class="question" data-topic="Coding">
+            <div class="qhead"><div class="qnum">19. Concurrency limiter</div><span class="badge high">High · Coding</span></div>
+            <p>Describe (or sketch) <code>async function mapLimit(items, limit, fn)</code> in JavaScript. How do you handle a rejection? How is this different from a queue with prefetch 1?</p>
+            <div class="confidence">Confidence:
+              <label><input type="radio" name="c19" value="1" /> 1</label>
+              <label><input type="radio" name="c19" value="2" /> 2</label>
+              <label><input type="radio" name="c19" value="3" /> 3</label>
+              <label><input type="radio" name="c19" value="4" /> 4</label>
+              <label><input type="radio" name="c19" value="5" /> 5</label>
+            </div>
+            <textarea name="a19"></textarea>
+          </article>
+
+          <article class="question" data-topic="System Design">
+            <div class="qhead"><div class="qnum">20. CAP in products you know</div><span class="badge high">High · Design</span></div>
+            <p>For (a) a product catalog read and (b) a wallet balance: what do you sacrifice under partition, and what does the user see? Tie it to a cache or replica choice you would actually ship.</p>
+            <div class="confidence">Confidence:
+              <label><input type="radio" name="c20" value="1" /> 1</label>
+              <label><input type="radio" name="c20" value="2" /> 2</label>
+              <label><input type="radio" name="c20" value="3" /> 3</label>
+              <label><input type="radio" name="c20" value="4" /> 4</label>
+              <label><input type="radio" name="c20" value="5" /> 5</label>
+            </div>
+            <textarea name="a20"></textarea>
+          </article>
+
+          <div class="actions">
+            <button type="submit" class="btn btn-primary">Save assessment in this browser</button>
+            <button type="button" class="btn btn-ghost" id="copy-btn">Copy answers for chat</button>
+            <button type="button" class="btn btn-ghost" id="clear-btn">Clear saved answers</button>
+          </div>
+        </form>
+
+        <div class="card" id="assessment-summary">
+          <h3>Local summary (not a grade)</h3>
+          <p id="summary-text"></p>
+          <p>Paste the copied block into chat. Scoring 1–10 and a customized roadmap happen there, after your answers — not from this page guessing.</p>
+        </div>
+      </section>
+
+      <section id="tracker" class="panel">
+        <p class="kicker">Progress</p>
+        <header class="hero">
+          <h2>Tracker — update as you go</h2>
+          <p class="lead">Statuses: Not Started · Learning · Practicing · Weak · Good · Interview Ready. Score is 1–10 after a topic’s interview set. Below 7 stays Weak.</p>
+        </header>
+
+        <div class="card">
+          <table>
+            <thead>
+              <tr>
+                <th>Topic</th>
+                <th>Status</th>
+                <th>Score</th>
+                <th>Weak areas</th>
+                <th>Last reviewed</th>
+              </tr>
+            </thead>
+            <tbody id="tracker-body"></tbody>
+          </table>
+          <div class="actions">
+            <button type="button" class="btn btn-primary" id="save-tracker">Save tracker</button>
+          </div>
+        </div>
+      </section>
+
+      <footer class="fine">
+        Node.js / TypeScript full-stack · 5 years · preparation artifact only. Open this file in a browser; answers stay in localStorage on this machine.
+      </footer>
+    </main>
+  </div>
+
+  <script src="assets/prep.js"></script>
+</body>
+</html>

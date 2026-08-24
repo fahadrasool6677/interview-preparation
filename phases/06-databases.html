@@ -1,0 +1,1401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Databases &amp; Prisma — Node.js Interview Prep</title>
+  <link rel="stylesheet" href="../assets/prep.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" />
+</head>
+<body data-page="phase" data-phase="06">
+  <div class="app">
+    <nav class="sidebar">
+      <h1>Node.js Interview Prep</h1>
+      <p class="tag">5-year · Backend / Full-stack · Senior track</p>
+      <a class="nav-link" href="../nodejs-interview-preparation.html">← Hub</a>
+      <div class="nav-group">Phases</div>
+      <div id="phase-links">
+        <a class="nav-link" href="01-javascript.html">01 JavaScript</a>
+        <a class="nav-link" href="02-nodejs.html">02 Node.js</a>
+        <a class="nav-link" href="03-typescript.html">03 TypeScript</a>
+        <a class="nav-link" href="04-express.html">04 Express</a>
+        <a class="nav-link" href="05-rest.html">05 REST APIs</a>
+        <a class="nav-link" href="06-databases.html">06 Databases</a>
+        <a class="nav-link" href="07-redis.html">07 Redis</a>
+        <a class="nav-link" href="08-auth-security.html">08 Auth &amp; Security</a>
+        <a class="nav-link" href="09-microservices.html">09 Microservices</a>
+        <a class="nav-link" href="10-queues.html">10 Queues</a>
+        <a class="nav-link" href="11-system-design.html">11 System Design</a>
+        <a class="nav-link" href="12-performance.html">12 Performance</a>
+        <a class="nav-link" href="13-docker.html">13 Docker &amp; Deploy</a>
+        <a class="nav-link" href="14-testing.html">14 Testing</a>
+        <a class="nav-link" href="15-coding.html">15 Coding</a>
+        <a class="nav-link" href="16-projects.html">16 Projects</a>
+      </div>
+      <div class="meta">Mark topics reviewed as you go. Progress is stored in this browser.</div>
+    </nav>
+    <main>
+      <p class="kicker">Phase 06 · Relational correctness and performance</p>
+      <header class="hero">
+        <h2>Databases &amp; Prisma</h2>
+        <p class="lead">Reason from a shared orders/payments schema through SQL semantics, concurrency, indexing, scaling, and production Prisma trade-offs.</p>
+      </header>
+      <div class="note">Interview shape: claim → mechanism → production example → failure → trade-off. Reveal answers only after you attempt them aloud.</div>
+      <div class="phase-layout">
+        <aside class="toc">
+          <strong>On this page</strong>
+          <div class="toc-list"></div>
+        </aside>
+        <div class="topics">
+          
+  <article class="topic" id="shared-orders-payments-schema">
+    <div class="topic-head">
+      <h3>Shared orders/payments schema</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>The phase uses orders as the aggregate record and payments as child attempts, with checks, foreign keys, uniqueness, money in minor units, and UTC timestamps.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>A shared schema makes cardinality, integrity, transaction, and performance discussions concrete.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">SQL</div>
+        <pre>-- Shared schema used throughout this phase
+CREATE TABLE orders (
+  id bigint PRIMARY KEY,
+  customer_id bigint NOT NULL,
+  status text NOT NULL CHECK (status IN ('pending','paid','cancelled')),
+  total_minor integer NOT NULL CHECK (total_minor &gt;= 0),
+  currency char(3) NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE TABLE payments (
+  id bigint PRIMARY KEY,
+  order_id bigint NOT NULL REFERENCES orders(id),
+  provider_ref text UNIQUE,
+  status text NOT NULL CHECK (status IN ('processing','succeeded','failed')),
+  amount_minor integer NOT NULL CHECK (amount_minor &gt;= 0),
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+SELECT o.id, o.status, p.status AS payment_status
+FROM orders o LEFT JOIN payments p ON p.order_id = o.id
+ORDER BY o.id;</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Orders remain visible without a payment.</pre></div><div class="sql-result"><table><thead><tr><th>order_id</th><th>order_status</th><th>payment_status</th></tr></thead><tbody><tr><td>101</td><td>paid</td><td>succeeded</td></tr><tr><td>102</td><td>pending</td><td>NULL</td></tr></tbody></table></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating Shared orders/payments schema as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply Shared orders/payments schema to an order/payment API?</li><li>What failure mode changes your design for Shared orders/payments schema?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Shared orders/payments schema should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default Shared orders/payments schema approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready Shared orders/payments schema decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="sql-fundamentals">
+    <div class="topic-head">
+      <h3>SQL fundamentals</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>SQL is declarative: SELECT projects, FROM forms inputs, WHERE filters, GROUP BY aggregates, HAVING filters groups, and ORDER BY defines output order.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>The optimizer chooses physical execution, so correctness depends on relational semantics rather than procedural reading order.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">SQL</div>
+        <pre>SELECT id, total_minor
+FROM orders
+WHERE status = 'paid'
+ORDER BY created_at DESC
+LIMIT 2;</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Two newest paid orders.</pre></div><div class="sql-result"><table><thead><tr><th>id</th><th>total_minor</th></tr></thead><tbody><tr><td>101</td><td>4999</td></tr><tr><td>97</td><td>2599</td></tr></tbody></table></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating SQL fundamentals as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply SQL fundamentals to an order/payment API?</li><li>What failure mode changes your design for SQL fundamentals?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">SQL fundamentals should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default SQL fundamentals approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready SQL fundamentals decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="joins">
+    <div class="topic-head">
+      <h3>Joins</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Joins combine rows by predicates. INNER requires matches; LEFT preserves the left side; join cardinality can multiply parent rows.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Understanding one-to-many cardinality prevents incorrect totals and missing orders.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">SQL</div>
+        <pre>SELECT o.id, COUNT(p.id) AS attempts
+FROM orders o
+LEFT JOIN payments p ON p.order_id = o.id
+GROUP BY o.id
+ORDER BY o.id;</pre>
+        <div class="expected"><strong>Expected:</strong><pre>One row per order, including zero attempts.</pre></div><div class="sql-result"><table><thead><tr><th>order_id</th><th>attempts</th></tr></thead><tbody><tr><td>101</td><td>2</td></tr><tr><td>102</td><td>0</td></tr></tbody></table></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating Joins as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply Joins to an order/payment API?</li><li>What failure mode changes your design for Joins?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Joins should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default Joins approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready Joins decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="subqueries">
+    <div class="topic-head">
+      <h3>Subqueries</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>A subquery produces a scalar, row set, or correlated test. EXISTS is often the clearest way to express presence without row multiplication.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>The optimizer may rewrite it, but semantic shape still affects null behavior and readability.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">SQL</div>
+        <pre>SELECT o.id
+FROM orders o
+WHERE EXISTS (
+  SELECT 1 FROM payments p
+  WHERE p.order_id = o.id AND p.status = 'failed'
+);</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Orders having at least one failed payment.</pre></div><div class="sql-result"><table><thead><tr><th>order_id</th></tr></thead><tbody><tr><td>101</td></tr><tr><td>108</td></tr></tbody></table></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating Subqueries as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply Subqueries to an order/payment API?</li><li>What failure mode changes your design for Subqueries?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Subqueries should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default Subqueries approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready Subqueries decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="ctes">
+    <div class="topic-head">
+      <h3>CTEs</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>A common table expression names an intermediate relation; recursive CTEs traverse hierarchies. Modern PostgreSQL may inline non-materialized CTEs.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>CTEs improve reasoning, but forced materialization can help or harm depending on reuse and filtering.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">SQL</div>
+        <pre>WITH successful AS (
+  SELECT order_id, SUM(amount_minor) paid
+  FROM payments WHERE status = 'succeeded' GROUP BY order_id
+)
+SELECT o.id, s.paid
+FROM orders o JOIN successful s ON s.order_id = o.id;</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Successful payment totals by order.</pre></div><div class="sql-result"><table><thead><tr><th>order_id</th><th>paid</th></tr></thead><tbody><tr><td>101</td><td>4999</td></tr><tr><td>110</td><td>8000</td></tr></tbody></table></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating CTEs as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply CTEs to an order/payment API?</li><li>What failure mode changes your design for CTEs?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">CTEs should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default CTEs approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready CTEs decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="window-functions">
+    <div class="topic-head">
+      <h3>Window functions</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Window functions compute across related rows without collapsing them. PARTITION BY defines groups and ORDER BY defines sequence.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>They solve ranking, running totals, and latest-per-group while preserving row detail.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">SQL</div>
+        <pre>SELECT order_id, id AS payment_id,
+  row_number() OVER (PARTITION BY order_id ORDER BY created_at DESC, id DESC) AS attempt_no
+FROM payments;</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Payment attempts ranked newest-first per order.</pre></div><div class="sql-result"><table><thead><tr><th>order_id</th><th>payment_id</th><th>attempt_no</th></tr></thead><tbody><tr><td>101</td><td>502</td><td>1</td></tr><tr><td>101</td><td>501</td><td>2</td></tr></tbody></table></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating Window functions as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply Window functions to an order/payment API?</li><li>What failure mode changes your design for Window functions?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Window functions should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default Window functions approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready Window functions decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="aggregations">
+    <div class="topic-head">
+      <h3>Aggregations</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Aggregates collapse groups; COUNT(*), COUNT(column), SUM, and filtered aggregates have distinct null semantics.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Financial reports require correct grouping grain and must avoid duplicated amounts from joins.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">SQL</div>
+        <pre>SELECT currency,
+  COUNT(*) FILTER (WHERE status='paid') AS paid_orders,
+  SUM(total_minor) FILTER (WHERE status='paid') AS revenue_minor
+FROM orders GROUP BY currency;</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Paid count and revenue per currency.</pre></div><div class="sql-result"><table><thead><tr><th>currency</th><th>paid_orders</th><th>revenue_minor</th></tr></thead><tbody><tr><td>USD</td><td>12</td><td>54988</td></tr><tr><td>EUR</td><td>4</td><td>18200</td></tr></tbody></table></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating Aggregations as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply Aggregations to an order/payment API?</li><li>What failure mode changes your design for Aggregations?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Aggregations should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default Aggregations approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready Aggregations decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="transactions">
+    <div class="topic-head">
+      <h3>Transactions</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>A transaction commits related changes atomically. Keep it short, lock in a consistent order, and never wait on remote APIs while holding locks.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Order transitions, payment rows, and outbox events must either become visible together or not at all.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">SQL</div>
+        <pre>BEGIN;
+UPDATE orders SET status='paid' WHERE id=101 AND status='pending';
+INSERT INTO payments(id,order_id,status,amount_minor) VALUES (501,101,'succeeded',4999);
+COMMIT;</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Both changes commit together; production code checks affected-row count.</pre></div><div class="sql-result"><table><thead><tr><th>updated_orders</th><th>inserted_payments</th></tr></thead><tbody><tr><td>1</td><td>1</td></tr></tbody></table></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating Transactions as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply Transactions to an order/payment API?</li><li>What failure mode changes your design for Transactions?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Transactions should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default Transactions approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready Transactions decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="acid">
+    <div class="topic-head">
+      <h3>ACID</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Atomicity groups effects, consistency preserves declared invariants, isolation controls concurrent visibility, and durability retains committed data.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>ACID is not automatic business correctness: constraints and transaction boundaries must encode the invariant.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">SQL</div>
+        <pre>BEGIN;
+INSERT INTO payments(id,order_id,status,amount_minor)
+VALUES (502,101,'succeeded',-1);
+COMMIT;</pre>
+        <div class="expected"><strong>Expected:</strong><pre>The CHECK constraint aborts the invalid transaction.</pre></div><div class="sql-result"><table><thead><tr><th>committed</th><th>reason</th></tr></thead><tbody><tr><td>false</td><td>payments_amount_minor_check</td></tr></tbody></table></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating ACID as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply ACID to an order/payment API?</li><li>What failure mode changes your design for ACID?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">ACID should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default ACID approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready ACID decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="isolation-levels">
+    <div class="topic-head">
+      <h3>Isolation levels</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Read Committed prevents dirty reads; Repeatable Read gives a stable snapshot; Serializable rejects executions that cannot be ordered serially.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Higher isolation closes anomalies but increases retries and contention; select it from the invariant, not habit.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">SQL</div>
+        <pre>BEGIN ISOLATION LEVEL SERIALIZABLE;
+SELECT status FROM orders WHERE id=101;
+UPDATE orders SET status='paid' WHERE id=101 AND status='pending';
+COMMIT;</pre>
+        <div class="expected"><strong>Expected:</strong><pre>One conflicting serializable transaction may fail and must retry.</pre></div><div class="sql-result"><table><thead><tr><th>transaction_a</th><th>transaction_b</th></tr></thead><tbody><tr><td>commit</td><td>serialization_failure</td></tr></tbody></table></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating Isolation levels as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply Isolation levels to an order/payment API?</li><li>What failure mode changes your design for Isolation levels?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Isolation levels should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default Isolation levels approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready Isolation levels decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="locks">
+    <div class="topic-head">
+      <h3>Locks</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Row locks coordinate conflicting writes; SELECT ... FOR UPDATE explicitly locks selected rows. Lock scope and duration determine contention.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>A guarded order transition can serialize competing payment completions without locking unrelated orders.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">SQL</div>
+        <pre>BEGIN;
+SELECT status FROM orders WHERE id=101 FOR UPDATE;
+UPDATE orders SET status='paid' WHERE id=101 AND status='pending';
+COMMIT;</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Concurrent writers for order 101 wait or fail under NOWAIT.</pre></div><div class="sql-result"><table><thead><tr><th>order_id</th><th>lock</th></tr></thead><tbody><tr><td>101</td><td>row exclusive</td></tr></tbody></table></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating Locks as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply Locks to an order/payment API?</li><li>What failure mode changes your design for Locks?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Locks should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default Locks approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready Locks decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="deadlocks">
+    <div class="topic-head">
+      <h3>Deadlocks</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>A deadlock is a cycle of transactions waiting on one another; the database aborts a victim.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Applications must use deterministic lock order, short transactions, and bounded retry because detection cannot preserve both transactions.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">SQL</div>
+        <pre>BEGIN;
+SELECT id FROM orders WHERE id IN (101,102)
+ORDER BY id
+FOR UPDATE;</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Every workflow locks orders in ascending ID order.</pre></div><div class="sql-result"><table><thead><tr><th>first_lock</th><th>second_lock</th></tr></thead><tbody><tr><td>101</td><td>102</td></tr></tbody></table></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating Deadlocks as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply Deadlocks to an order/payment API?</li><li>What failure mode changes your design for Deadlocks?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Deadlocks should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default Deadlocks approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready Deadlocks decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="indexes">
+    <div class="topic-head">
+      <h3>Indexes</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>A B-tree index orders keys and row locators, accelerating selective predicates and ordering at the cost of storage and write amplification.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>An index helps only when its leading keys and selectivity fit the query; it does not make every lookup free.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">SQL</div>
+        <pre>CREATE INDEX idx_orders_customer_created
+ON orders(customer_id, created_at DESC);
+
+SELECT id FROM orders
+WHERE customer_id=7 ORDER BY created_at DESC LIMIT 10;</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Index scan can satisfy filter and order.</pre></div><div class="sql-result"><table><thead><tr><th>plan</th><th>estimated_rows</th></tr></thead><tbody><tr><td>Index Scan</td><td>10</td></tr></tbody></table></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating Indexes as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply Indexes to an order/payment API?</li><li>What failure mode changes your design for Indexes?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Indexes should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default Indexes approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready Indexes decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="composite-indexes">
+    <div class="topic-head">
+      <h3>Composite indexes</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>A composite index is ordered lexicographically; equality on leading columns followed by range/order columns is a common design.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Column order determines which query shapes can seek efficiently; redundant prefixes add write cost.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">SQL</div>
+        <pre>CREATE INDEX idx_payments_order_status_created
+ON payments(order_id, status, created_at DESC);
+
+SELECT id FROM payments
+WHERE order_id=101 AND status='failed'
+ORDER BY created_at DESC;</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Uses the complete leading prefix.</pre></div><div class="sql-result"><table><thead><tr><th>index_keys</th><th>query_match</th></tr></thead><tbody><tr><td>order_id,status,created_at</td><td>full prefix</td></tr></tbody></table></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating Composite indexes as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply Composite indexes to an order/payment API?</li><li>What failure mode changes your design for Composite indexes?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Composite indexes should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default Composite indexes approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready Composite indexes decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="partial-indexes">
+    <div class="topic-head">
+      <h3>Partial indexes</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>A partial index stores only rows satisfying a predicate and is usable when the query implies that predicate.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>It can be smaller and enforce conditional uniqueness, ideal for rare active states.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">SQL</div>
+        <pre>CREATE UNIQUE INDEX one_live_payment_per_order
+ON payments(order_id)
+WHERE status='processing';</pre>
+        <div class="expected"><strong>Expected:</strong><pre>A second processing payment for one order is rejected.</pre></div><div class="sql-result"><table><thead><tr><th>order_id</th><th>processing_rows_allowed</th></tr></thead><tbody><tr><td>101</td><td>1</td></tr></tbody></table></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating Partial indexes as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply Partial indexes to an order/payment API?</li><li>What failure mode changes your design for Partial indexes?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Partial indexes should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default Partial indexes approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready Partial indexes decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="query-optimization">
+    <div class="topic-head">
+      <h3>Query optimization</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Optimization begins with workload and evidence: reduce rows early, choose correct indexes, avoid N+1 and over-fetching, and validate under representative data.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Rewrites based only on intuition can shift cost, break semantics, or optimize a non-bottleneck.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">SQL</div>
+        <pre>SELECT o.id, p.id
+FROM orders o
+JOIN LATERAL (
+ SELECT id FROM payments
+ WHERE order_id=o.id ORDER BY created_at DESC LIMIT 1
+) p ON true
+WHERE o.customer_id=7;</pre>
+        <div class="expected"><strong>Expected:</strong><pre>One set-based query returns the latest attempt per order.</pre></div><div class="sql-result"><table><thead><tr><th>order_id</th><th>payment_id</th></tr></thead><tbody><tr><td>101</td><td>502</td></tr><tr><td>104</td><td>520</td></tr></tbody></table></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating Query optimization as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply Query optimization to an order/payment API?</li><li>What failure mode changes your design for Query optimization?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Query optimization should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default Query optimization approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready Query optimization decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="explain-explain-analyze">
+    <div class="topic-head">
+      <h3>EXPLAIN/EXPLAIN ANALYZE</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>EXPLAIN shows the estimated plan; EXPLAIN ANALYZE executes and reports actual timing and row counts. BUFFERS reveals cache and I/O behavior.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Estimate/actual divergence exposes stale statistics or correlated data; execution evidence identifies the expensive node.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">SQL</div>
+        <pre>EXPLAIN (ANALYZE, BUFFERS, FORMAT TEXT)
+SELECT * FROM payments
+WHERE order_id=101 AND status='failed';</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Inspect actual vs estimated rows, loops, buffers, and total time.</pre></div><div class="sql-result"><table><thead><tr><th>node</th><th>actual_rows</th></tr></thead><tbody><tr><td>Index Scan</td><td>2</td></tr></tbody></table></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating EXPLAIN/EXPLAIN ANALYZE as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply EXPLAIN/EXPLAIN ANALYZE to an order/payment API?</li><li>What failure mode changes your design for EXPLAIN/EXPLAIN ANALYZE?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">EXPLAIN/EXPLAIN ANALYZE should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default EXPLAIN/EXPLAIN ANALYZE approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready EXPLAIN/EXPLAIN ANALYZE decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="normalization">
+    <div class="topic-head">
+      <h3>Normalization</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Normalization separates facts to reduce update, insert, and delete anomalies; third normal form avoids non-key dependencies on non-key attributes.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Payment attempts belong in their own relation instead of repeated columns on orders.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">SQL</div>
+        <pre>SELECT o.id, p.id, p.status
+FROM orders o JOIN payments p ON p.order_id=o.id
+WHERE o.id=101;</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Normalized one-to-many payment attempts.</pre></div><div class="sql-result"><table><thead><tr><th>order_id</th><th>payment_id</th><th>status</th></tr></thead><tbody><tr><td>101</td><td>501</td><td>failed</td></tr><tr><td>101</td><td>502</td><td>succeeded</td></tr></tbody></table></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating Normalization as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply Normalization to an order/payment API?</li><li>What failure mode changes your design for Normalization?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Normalization should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default Normalization approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready Normalization decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="denormalization">
+    <div class="topic-head">
+      <h3>Denormalization</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Denormalization duplicates or precomputes data for a measured read path, with an explicit source of truth and repair strategy.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>It trades simpler/faster reads for write complexity, lag, and consistency monitoring.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">SQL</div>
+        <pre>ALTER TABLE orders ADD COLUMN successful_payment_id bigint;
+-- Maintained in the same transaction as payment success.</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Latest successful payment is directly readable.</pre></div><div class="sql-result"><table><thead><tr><th>read_joins</th><th>consistency_strategy</th></tr></thead><tbody><tr><td>0</td><td>transaction + reconciliation</td></tr></tbody></table></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating Denormalization as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply Denormalization to an order/payment API?</li><li>What failure mode changes your design for Denormalization?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Denormalization should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default Denormalization approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready Denormalization decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="database-constraints">
+    <div class="topic-head">
+      <h3>Database constraints</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>NOT NULL, CHECK, UNIQUE, exclusion, and foreign-key constraints are concurrency-safe final guards for invariants expressible in one database.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Application validation improves errors, but only the database sees all writers atomically.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">SQL</div>
+        <pre>ALTER TABLE payments
+ADD CONSTRAINT payment_amount_positive CHECK (amount_minor &gt; 0),
+ADD CONSTRAINT provider_ref_unique UNIQUE(provider_ref);</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Invalid amount or duplicate provider reference is rejected.</pre></div><div class="sql-result"><table><thead><tr><th>constraint</th><th>protected_invariant</th></tr></thead><tbody><tr><td>CHECK</td><td>positive amount</td></tr><tr><td>UNIQUE</td><td>provider deduplication</td></tr></tbody></table></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating Database constraints as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply Database constraints to an order/payment API?</li><li>What failure mode changes your design for Database constraints?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Database constraints should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default Database constraints approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready Database constraints decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="foreign-keys">
+    <div class="topic-head">
+      <h3>Foreign keys</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>A foreign key requires each child reference to match a parent key and needs thoughtful indexes on child columns.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>It prevents orphan payments even if a script, migration, or another service bypasses application checks.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">SQL</div>
+        <pre>INSERT INTO payments(id,order_id,status,amount_minor)
+VALUES (999,999999,'processing',4999);</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Fails because order 999999 does not exist.</pre></div><div class="sql-result"><table><thead><tr><th>inserted</th><th>error</th></tr></thead><tbody><tr><td>false</td><td>foreign_key_violation</td></tr></tbody></table></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating Foreign keys as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply Foreign keys to an order/payment API?</li><li>What failure mode changes your design for Foreign keys?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Foreign keys should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default Foreign keys approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready Foreign keys decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="cascades">
+    <div class="topic-head">
+      <h3>Cascades</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>ON DELETE/UPDATE actions encode lifecycle coupling: RESTRICT, CASCADE, SET NULL, or NO ACTION. Deleting financial records is usually restricted or soft-deleted.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>An accidental cascade can erase a large graph and audit history; lifecycle semantics must be explicit.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">SQL</div>
+        <pre>ALTER TABLE payments DROP CONSTRAINT payments_order_id_fkey;
+ALTER TABLE payments ADD FOREIGN KEY(order_id)
+REFERENCES orders(id) ON DELETE RESTRICT;</pre>
+        <div class="expected"><strong>Expected:</strong><pre>An order with payments cannot be physically deleted.</pre></div><div class="sql-result"><table><thead><tr><th>delete_order</th><th>result</th></tr></thead><tbody><tr><td>101</td><td>restricted</td></tr></tbody></table></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating Cascades as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply Cascades to an order/payment API?</li><li>What failure mode changes your design for Cascades?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Cascades should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default Cascades approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready Cascades decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="connection-pooling">
+    <div class="topic-head">
+      <h3>Connection pooling</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>A pool amortizes connection setup and caps database concurrency. Bound per-instance pools against the global database limit and use timeouts.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Too many connections increase memory and context switching; queues in the app are safer than overload in the database.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">SQL</div>
+        <pre>SELECT count(*) AS active
+FROM pg_stat_activity
+WHERE datname=current_database();</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Monitor active, idle, wait time, acquisition timeout, and saturation.</pre></div><div class="sql-result"><table><thead><tr><th>active_connections</th></tr></thead><tbody><tr><td>48</td></tr></tbody></table></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating Connection pooling as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply Connection pooling to an order/payment API?</li><li>What failure mode changes your design for Connection pooling?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Connection pooling should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default Connection pooling approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready Connection pooling decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="read-replicas">
+    <div class="topic-head">
+      <h3>Read replicas</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Replicas asynchronously replay primary changes and serve stale-tolerant reads. Writes and read-after-write paths stay on the primary unless consistency is coordinated.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>They scale reads and improve recovery options but do not increase write capacity and introduce lag.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">SQL</div>
+        <pre>SELECT pg_last_wal_replay_lsn(), pg_last_xact_replay_timestamp();</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Replica lag is measured and routed around for freshness-sensitive order reads.</pre></div><div class="sql-result"><table><thead><tr><th>replica_lag_ms</th><th>route</th></tr></thead><tbody><tr><td>42</td><td>replica</td></tr><tr><td>3500</td><td>primary</td></tr></tbody></table></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating Read replicas as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply Read replicas to an order/payment API?</li><li>What failure mode changes your design for Read replicas?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Read replicas should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default Read replicas approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready Read replicas decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="database-scaling">
+    <div class="topic-head">
+      <h3>Database scaling</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Scale by fixing queries first, then larger nodes, replicas, partitioning, caching, archival, and finally sharding by a stable ownership key.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Every distribution boundary adds routing, rebalancing, cross-shard transaction, and operational complexity.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">SQL</div>
+        <pre>SELECT customer_id, count(*) AS orders
+FROM orders GROUP BY customer_id
+ORDER BY orders DESC LIMIT 3;</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Check tenant skew before choosing customer_id as a shard key.</pre></div><div class="sql-result"><table><thead><tr><th>customer_id</th><th>orders</th></tr></thead><tbody><tr><td>7</td><td>220000</td></tr><tr><td>9</td><td>8500</td></tr></tbody></table></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating Database scaling as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply Database scaling to an order/payment API?</li><li>What failure mode changes your design for Database scaling?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Database scaling should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default Database scaling approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready Database scaling decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="prisma-schema">
+    <div class="topic-head">
+      <h3>Prisma schema</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Prisma schema defines datasource, generator, models, fields, indexes, mappings, and referential actions; migrations make the database change explicit.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>The schema improves type-safe access but must still model database constraints and indexes rather than only TypeScript convenience.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>model Order {
+  id         BigInt    @id
+  status     String
+  totalMinor Int
+  payments   Payment[]
+  @@index([status])
+}
+model Payment {
+  id      BigInt @id
+  orderId BigInt
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  @@index([orderId])
+}</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Generated client reflects the shared relation</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating Prisma schema as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply Prisma schema to an order/payment API?</li><li>What failure mode changes your design for Prisma schema?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Prisma schema should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default Prisma schema approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready Prisma schema decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="prisma-relations">
+    <div class="topic-head">
+      <h3>Prisma relations</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Prisma relation fields are client-level navigation; scalar foreign-key fields and database constraints store the relation. Nested writes can be atomic.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Confusing implicit navigation with physical constraints causes missing indexes or surprising referential behavior.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>const order = await prisma.order.findUnique({
+  where: { id: 101n },
+  include: { payments: { orderBy: { createdAt: 'desc' }, take: 1 } }
+});</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Order with its latest payment</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating Prisma relations as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply Prisma relations to an order/payment API?</li><li>What failure mode changes your design for Prisma relations?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Prisma relations should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default Prisma relations approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready Prisma relations decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="prisma-transactions">
+    <div class="topic-head">
+      <h3>Prisma transactions</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Use nested writes for dependent records, batch transactions for independent operations, and interactive transactions only for short read-modify-write logic.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Long interactive transactions hold connections and locks; remote calls inside them create contention and ambiguous outcomes.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>await prisma.$transaction(async tx =&gt; {
+  const changed = await tx.order.updateMany({
+    where: { id: 101n, status: 'pending' }, data: { status: 'paid' }
+  });
+  if (changed.count !== 1) throw new Error('ORDER_NOT_PAYABLE');
+  await tx.payment.create({ data: payment });
+});</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Guarded transition and payment insert commit atomically</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating Prisma transactions as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply Prisma transactions to an order/payment API?</li><li>What failure mode changes your design for Prisma transactions?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Prisma transactions should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default Prisma transactions approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready Prisma transactions decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="n-1-problems">
+    <div class="topic-head">
+      <h3>N+1 problems</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>N+1 occurs when one query loads parents and one additional query runs per parent. Batch relations, join/select strategically, or use a DataLoader request cache.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Latency and database load scale with result count even though each individual query looks fast.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>const orders = await prisma.order.findMany({
+  where: { customerId },
+  include: { payments: { where: { status: 'succeeded' }, take: 1 } }
+});</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Bounded query count instead of one payment query per order</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating N+1 problems as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply N+1 problems to an order/payment API?</li><li>What failure mode changes your design for N+1 problems?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">N+1 problems should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default N+1 problems approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready N+1 problems decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="prisma-query-optimization">
+    <div class="topic-head">
+      <h3>Prisma query optimization</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Select only needed fields, bound collections, filter in the database, align indexes to generated SQL, and inspect query logs and plans.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>ORM ergonomics can hide over-fetching, relation fan-out, and predicates that cannot use an index.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>const rows = await prisma.order.findMany({
+  where: { customerId: 7n, status: 'paid' },
+  select: { id: true, totalMinor: true, createdAt: true },
+  orderBy: [{ createdAt: 'desc' }, { id: 'desc' }], take: 25
+});</pre>
+        <div class="expected"><strong>Expected:</strong><pre>A narrow, indexed, bounded query</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating Prisma query optimization as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply Prisma query optimization to an order/payment API?</li><li>What failure mode changes your design for Prisma query optimization?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Prisma query optimization should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default Prisma query optimization approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready Prisma query optimization decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="prisma-performance">
+    <div class="topic-head">
+      <h3>Prisma performance</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Treat Prisma as part of the data path: reuse one client, size pools globally, measure generated queries, avoid cold-start connection storms, and monitor transaction duration.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Type safety does not guarantee efficient SQL or healthy connection behavior.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>const prisma = globalThis.prisma ?? new PrismaClient({ log: [{ emit: 'event', level: 'query' }] });
+prisma.$on('query', e =&gt; metrics.observe('db.query.ms', e.duration));
+if (process.env.NODE_ENV !== 'production') globalThis.prisma = prisma;</pre>
+        <div class="expected"><strong>Expected:</strong><pre>One development client and query-duration telemetry</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating Prisma performance as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply Prisma performance to an order/payment API?</li><li>What failure mode changes your design for Prisma performance?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Prisma performance should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default Prisma performance approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready Prisma performance decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="raw-sql-when-appropriate">
+    <div class="topic-head">
+      <h3>Raw SQL when appropriate</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Use parameterized raw SQL when the ORM cannot express a window function, CTE, lock, bulk operation, database feature, or a proven hot query clearly.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Raw SQL can improve capability and control, but loses some portability and type safety; never interpolate untrusted values.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>const latest = await prisma.$queryRaw`
+  SELECT DISTINCT ON (order_id) order_id, id, status
+  FROM payments
+  WHERE order_id = ANY(${orderIds})
+  ORDER BY order_id, created_at DESC, id DESC
+`;</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Parameterized latest-payment query; result is runtime-validated</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating Raw SQL when appropriate as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply Raw SQL when appropriate to an order/payment API?</li><li>What failure mode changes your design for Raw SQL when appropriate?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Raw SQL when appropriate should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default Raw SQL when appropriate approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready Raw SQL when appropriate decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+          
+          
+          <div class="phase-nav"><a class="btn btn-ghost" href="05-rest.html">← 05 REST APIs</a><a class="btn btn-primary" href="07-redis.html">07 Redis →</a></div>
+        </div>
+      </div>
+      <footer class="fine">Phase 06 · Node.js / TypeScript interview preparation</footer>
+    </main>
+  </div>
+  <script src="../assets/prep.js"></script>
+</body>
+</html>

@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Queues &amp; Event-Driven Systems — Node.js Interview Prep</title>
+  <link rel="stylesheet" href="../assets/prep.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" />
+</head>
+<body data-page="phase" data-phase="10">
+  <div class="app">
+    <nav class="sidebar">
+      <h1>Node.js Interview Prep</h1>
+      <p class="tag">5-year · Backend / Full-stack · Senior track</p>
+      <a class="nav-link" href="../nodejs-interview-preparation.html">← Hub</a>
+      <div class="nav-group">Phases</div>
+      <div id="phase-links">
+        <a class="nav-link" href="01-javascript.html">01 JavaScript</a>
+        <a class="nav-link" href="02-nodejs.html">02 Node.js</a>
+        <a class="nav-link" href="03-typescript.html">03 TypeScript</a>
+        <a class="nav-link" href="04-express.html">04 Express</a>
+        <a class="nav-link" href="05-rest.html">05 REST APIs</a>
+        <a class="nav-link" href="06-databases.html">06 Databases</a>
+        <a class="nav-link" href="07-redis.html">07 Redis</a>
+        <a class="nav-link" href="08-auth-security.html">08 Auth &amp; Security</a>
+        <a class="nav-link" href="09-microservices.html">09 Microservices</a>
+        <a class="nav-link" href="10-queues.html">10 Queues</a>
+        <a class="nav-link" href="11-system-design.html">11 System Design</a>
+        <a class="nav-link" href="12-performance.html">12 Performance</a>
+        <a class="nav-link" href="13-docker.html">13 Docker &amp; Deploy</a>
+        <a class="nav-link" href="14-testing.html">14 Testing</a>
+        <a class="nav-link" href="15-coding.html">15 Coding</a>
+        <a class="nav-link" href="16-projects.html">16 Projects</a>
+      </div>
+      <div class="meta">Mark topics reviewed as you go. Progress is stored in this browser.</div>
+    </nav>
+    <main>
+      <p class="kicker">Phase 10 · Asynchronous workflows</p>
+      <header class="hero">
+        <h2>Queues &amp; Event-Driven Systems</h2>
+        <p class="lead">Reason about delivery through one production pipeline: <strong>Order Created → Payment → Inventory → Notification</strong>. Every stage must tolerate retries, duplicates, delay, and partial failure.</p>
+      </header>
+      <div class="note">Interview shape: claim → mechanism → production example → failure → trade-off. Reveal answers only after you attempt them aloud.</div>
+      <div class="phase-layout">
+        <aside class="toc">
+          <strong>On this page</strong>
+          <div class="toc-list"></div>
+        </aside>
+        <div class="topics">
+          
+  <article class="topic" id="queue-vs-pub-sub">
+    <div class="topic-head">
+      <h3>Queue vs Pub/Sub</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>A queue distributes each job to one consumer group; Pub/Sub gives each subscription its own delivery.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Choose from delivery semantics: work sharing versus independent fan-out, not from vendor terminology.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Order Created → Payment → Inventory → Notification
+Queue: payment workers compete for Order Created.
+Pub/Sub: payment, analytics, and fraud each receive Order Created.</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating queue vs pub/sub as a product choice without measuring its operational cost.</li><li>Explaining only the happy path; senior answers include overload, partial failure, and recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain queue vs pub/sub and when you would use it.</li><li>What production signal tells you this design is failing?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak"><strong>Model answer:</strong> A queue distributes each job to one consumer group; Pub/Sub gives each subscription its own delivery. I would define the SLO, instrument the critical path, and validate the decision under realistic load before standardizing it.</div><div class="speak"><strong>Failure signal:</strong> Watch latency percentiles, error/timeout rate, saturation, backlog, and business-level correctness—not averages alone.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How does this behave during a partial outage or retry surge?</li><li>Which trade-off would make you reverse this decision?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Bound concurrency and retries, use deadlines and backpressure, preserve idempotency, and make degradation explicit. Recovery must be tested, not assumed.</div><div class="speak">Reverse the choice when measured complexity, tail latency, consistency risk, or on-call burden exceeds the isolation or scaling benefit.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Sketch a production-ready use of queue vs pub/sub. Include SLOs, telemetry, one failure injection, and a rollback or recovery path.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="producers">
+    <div class="topic-head">
+      <h3>Producers</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>A producer creates a durable event with stable identity, version, timestamp, and partition key.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Transactional outbox publishing avoids the database-commit/message-publish dual-write gap.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>await db.transaction(async tx =&gt; {
+  await tx.orders.insert(order);
+  await tx.outbox.insert({
+    eventId, type: 'OrderCreated.v1', key: order.id, payload
+  });
+});
+// relay publishes outbox rows after commit</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating producers as a product choice without measuring its operational cost.</li><li>Explaining only the happy path; senior answers include overload, partial failure, and recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain producers and when you would use it.</li><li>What production signal tells you this design is failing?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak"><strong>Model answer:</strong> A producer creates a durable event with stable identity, version, timestamp, and partition key. I would define the SLO, instrument the critical path, and validate the decision under realistic load before standardizing it.</div><div class="speak"><strong>Failure signal:</strong> Watch latency percentiles, error/timeout rate, saturation, backlog, and business-level correctness—not averages alone.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How does this behave during a partial outage or retry surge?</li><li>Which trade-off would make you reverse this decision?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Bound concurrency and retries, use deadlines and backpressure, preserve idempotency, and make degradation explicit. Recovery must be tested, not assumed.</div><div class="speak">Reverse the choice when measured complexity, tail latency, consistency risk, or on-call burden exceeds the isolation or scaling benefit.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Sketch a production-ready use of producers. Include SLOs, telemetry, one failure injection, and a rollback or recovery path.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="consumers">
+    <div class="topic-head">
+      <h3>Consumers</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>A consumer validates, deduplicates, applies a bounded unit of work, and acknowledges only after durable completion.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Consumer concurrency must respect downstream capacity and ordering boundaries.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Order Created → Payment → Inventory → Notification
+Payment consumer validates schema → claims eventId → writes authorization → emits PaymentAuthorized → ack.</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating consumers as a product choice without measuring its operational cost.</li><li>Explaining only the happy path; senior answers include overload, partial failure, and recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain consumers and when you would use it.</li><li>What production signal tells you this design is failing?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak"><strong>Model answer:</strong> A consumer validates, deduplicates, applies a bounded unit of work, and acknowledges only after durable completion. I would define the SLO, instrument the critical path, and validate the decision under realistic load before standardizing it.</div><div class="speak"><strong>Failure signal:</strong> Watch latency percentiles, error/timeout rate, saturation, backlog, and business-level correctness—not averages alone.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How does this behave during a partial outage or retry surge?</li><li>Which trade-off would make you reverse this decision?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Bound concurrency and retries, use deadlines and backpressure, preserve idempotency, and make degradation explicit. Recovery must be tested, not assumed.</div><div class="speak">Reverse the choice when measured complexity, tail latency, consistency risk, or on-call burden exceeds the isolation or scaling benefit.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Sketch a production-ready use of consumers. Include SLOs, telemetry, one failure injection, and a rollback or recovery path.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="acknowledgements">
+    <div class="topic-head">
+      <h3>Acknowledgements</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>An acknowledgement transfers responsibility back to the broker after successful durable processing.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Acknowledging too early loses work; too late increases duplicates. Visibility/lock time must exceed normal processing or be renewed.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Payment commits authorization and outbox event, then ACKs OrderCreated. A crash before ACK causes safe redelivery.</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating acknowledgements as a product choice without measuring its operational cost.</li><li>Explaining only the happy path; senior answers include overload, partial failure, and recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain acknowledgements and when you would use it.</li><li>What production signal tells you this design is failing?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak"><strong>Model answer:</strong> An acknowledgement transfers responsibility back to the broker after successful durable processing. I would define the SLO, instrument the critical path, and validate the decision under realistic load before standardizing it.</div><div class="speak"><strong>Failure signal:</strong> Watch latency percentiles, error/timeout rate, saturation, backlog, and business-level correctness—not averages alone.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How does this behave during a partial outage or retry surge?</li><li>Which trade-off would make you reverse this decision?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Bound concurrency and retries, use deadlines and backpressure, preserve idempotency, and make degradation explicit. Recovery must be tested, not assumed.</div><div class="speak">Reverse the choice when measured complexity, tail latency, consistency risk, or on-call burden exceeds the isolation or scaling benefit.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Sketch a production-ready use of acknowledgements. Include SLOs, telemetry, one failure injection, and a rollback or recovery path.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="retries">
+    <div class="topic-head">
+      <h3>Retries</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Retries redeliver transiently failed work with a bounded attempt and time budget.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Immediate retry during dependency failure consumes capacity and delays healthy messages.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Order Created → Payment → Inventory → Notification
+Inventory timeout → delayed retry with jitter; invalid SKU → permanent failure route, not retry.</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating retries as a product choice without measuring its operational cost.</li><li>Explaining only the happy path; senior answers include overload, partial failure, and recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain retries and when you would use it.</li><li>What production signal tells you this design is failing?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak"><strong>Model answer:</strong> Retries redeliver transiently failed work with a bounded attempt and time budget. I would define the SLO, instrument the critical path, and validate the decision under realistic load before standardizing it.</div><div class="speak"><strong>Failure signal:</strong> Watch latency percentiles, error/timeout rate, saturation, backlog, and business-level correctness—not averages alone.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How does this behave during a partial outage or retry surge?</li><li>Which trade-off would make you reverse this decision?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Bound concurrency and retries, use deadlines and backpressure, preserve idempotency, and make degradation explicit. Recovery must be tested, not assumed.</div><div class="speak">Reverse the choice when measured complexity, tail latency, consistency risk, or on-call burden exceeds the isolation or scaling benefit.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Sketch a production-ready use of retries. Include SLOs, telemetry, one failure injection, and a rollback or recovery path.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="dead-letter-queues">
+    <div class="topic-head">
+      <h3>Dead-letter queues</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>A DLQ stores messages that cannot complete after policy limits or permanent validation failure.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>DLQs need ownership, alarms, diagnosis metadata, retention, and a safe redrive workflow.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Notification event fails 5 times → DLQ. Fix template, replay by eventId at a controlled rate, verify deduplication.</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating dead-letter queues as a product choice without measuring its operational cost.</li><li>Explaining only the happy path; senior answers include overload, partial failure, and recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain dead-letter queues and when you would use it.</li><li>What production signal tells you this design is failing?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak"><strong>Model answer:</strong> A DLQ stores messages that cannot complete after policy limits or permanent validation failure. I would define the SLO, instrument the critical path, and validate the decision under realistic load before standardizing it.</div><div class="speak"><strong>Failure signal:</strong> Watch latency percentiles, error/timeout rate, saturation, backlog, and business-level correctness—not averages alone.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How does this behave during a partial outage or retry surge?</li><li>Which trade-off would make you reverse this decision?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Bound concurrency and retries, use deadlines and backpressure, preserve idempotency, and make degradation explicit. Recovery must be tested, not assumed.</div><div class="speak">Reverse the choice when measured complexity, tail latency, consistency risk, or on-call burden exceeds the isolation or scaling benefit.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Sketch a production-ready use of dead-letter queues. Include SLOs, telemetry, one failure injection, and a rollback or recovery path.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="message-ordering">
+    <div class="topic-head">
+      <h3>Message ordering</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Ordering is scoped to a partition key such as orderId and requires bounded per-key concurrency.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>A global order destroys parallelism; a per-order sequence preserves state transitions.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Order Created → Payment → Inventory → Notification
+Partition by orderId: OrderCreated(seq=1) precedes PaymentAuthorized(seq=2); different orders run concurrently.</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating message ordering as a product choice without measuring its operational cost.</li><li>Explaining only the happy path; senior answers include overload, partial failure, and recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain message ordering and when you would use it.</li><li>What production signal tells you this design is failing?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak"><strong>Model answer:</strong> Ordering is scoped to a partition key such as orderId and requires bounded per-key concurrency. I would define the SLO, instrument the critical path, and validate the decision under realistic load before standardizing it.</div><div class="speak"><strong>Failure signal:</strong> Watch latency percentiles, error/timeout rate, saturation, backlog, and business-level correctness—not averages alone.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How does this behave during a partial outage or retry surge?</li><li>Which trade-off would make you reverse this decision?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Bound concurrency and retries, use deadlines and backpressure, preserve idempotency, and make degradation explicit. Recovery must be tested, not assumed.</div><div class="speak">Reverse the choice when measured complexity, tail latency, consistency risk, or on-call burden exceeds the isolation or scaling benefit.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Sketch a production-ready use of message ordering. Include SLOs, telemetry, one failure injection, and a rollback or recovery path.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="duplicate-messages">
+    <div class="topic-head">
+      <h3>Duplicate messages</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Redelivery occurs when the work commits but its ACK is lost, or when a producer republishes after an uncertain response.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Consumers must assume duplicates under at-least-once delivery.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Notification consumer inserts (consumerName,eventId) uniquely before sending; duplicate PaymentAuthorized becomes a no-op.</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating duplicate messages as a product choice without measuring its operational cost.</li><li>Explaining only the happy path; senior answers include overload, partial failure, and recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain duplicate messages and when you would use it.</li><li>What production signal tells you this design is failing?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak"><strong>Model answer:</strong> Redelivery occurs when the work commits but its ACK is lost, or when a producer republishes after an uncertain response. I would define the SLO, instrument the critical path, and validate the decision under realistic load before standardizing it.</div><div class="speak"><strong>Failure signal:</strong> Watch latency percentiles, error/timeout rate, saturation, backlog, and business-level correctness—not averages alone.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How does this behave during a partial outage or retry surge?</li><li>Which trade-off would make you reverse this decision?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Bound concurrency and retries, use deadlines and backpressure, preserve idempotency, and make degradation explicit. Recovery must be tested, not assumed.</div><div class="speak">Reverse the choice when measured complexity, tail latency, consistency risk, or on-call burden exceeds the isolation or scaling benefit.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Sketch a production-ready use of duplicate messages. Include SLOs, telemetry, one failure injection, and a rollback or recovery path.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="at-least-once">
+    <div class="topic-head">
+      <h3>At-least-once</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>A message is retried until acknowledged, so loss is minimized but duplicate delivery is possible.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>This is the common practical contract for durable brokers and requires idempotent effects.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Order Created → Payment → Inventory → Notification
+Crash after inventory commit but before ACK → redelivery → dedupe eventId → ACK.</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating at-least-once as a product choice without measuring its operational cost.</li><li>Explaining only the happy path; senior answers include overload, partial failure, and recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain at-least-once and when you would use it.</li><li>What production signal tells you this design is failing?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak"><strong>Model answer:</strong> A message is retried until acknowledged, so loss is minimized but duplicate delivery is possible. I would define the SLO, instrument the critical path, and validate the decision under realistic load before standardizing it.</div><div class="speak"><strong>Failure signal:</strong> Watch latency percentiles, error/timeout rate, saturation, backlog, and business-level correctness—not averages alone.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How does this behave during a partial outage or retry surge?</li><li>Which trade-off would make you reverse this decision?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Bound concurrency and retries, use deadlines and backpressure, preserve idempotency, and make degradation explicit. Recovery must be tested, not assumed.</div><div class="speak">Reverse the choice when measured complexity, tail latency, consistency risk, or on-call burden exceeds the isolation or scaling benefit.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Sketch a production-ready use of at-least-once. Include SLOs, telemetry, one failure injection, and a rollback or recovery path.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="at-most-once">
+    <div class="topic-head">
+      <h3>At-most-once</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>A message is delivered zero or one time by acknowledging before work or never retrying.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>It avoids duplicates by accepting loss; suitable only where missing work is tolerable or reconstructable.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Best-effort analytics for OrderCreated may be at-most-once; payment and inventory must not be.</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating at-most-once as a product choice without measuring its operational cost.</li><li>Explaining only the happy path; senior answers include overload, partial failure, and recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain at-most-once and when you would use it.</li><li>What production signal tells you this design is failing?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak"><strong>Model answer:</strong> A message is delivered zero or one time by acknowledging before work or never retrying. I would define the SLO, instrument the critical path, and validate the decision under realistic load before standardizing it.</div><div class="speak"><strong>Failure signal:</strong> Watch latency percentiles, error/timeout rate, saturation, backlog, and business-level correctness—not averages alone.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How does this behave during a partial outage or retry surge?</li><li>Which trade-off would make you reverse this decision?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Bound concurrency and retries, use deadlines and backpressure, preserve idempotency, and make degradation explicit. Recovery must be tested, not assumed.</div><div class="speak">Reverse the choice when measured complexity, tail latency, consistency risk, or on-call burden exceeds the isolation or scaling benefit.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Sketch a production-ready use of at-most-once. Include SLOs, telemetry, one failure injection, and a rollback or recovery path.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="exactly-once-concepts">
+    <div class="topic-head">
+      <h3>Exactly-once concepts</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Exactly-once is scoped: a broker may atomically manage its log, while external database, email, and payment effects remain separate.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>End-to-end exactly-once usually means at-least-once delivery plus idempotent, transactional effects.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Order Created → Payment → Inventory → Notification
+Kafka transaction can atomically consume and publish; it cannot atomically make a third-party payment API forget a duplicate call.</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating exactly-once concepts as a product choice without measuring its operational cost.</li><li>Explaining only the happy path; senior answers include overload, partial failure, and recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain exactly-once concepts and when you would use it.</li><li>What production signal tells you this design is failing?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak"><strong>Model answer:</strong> Exactly-once is scoped: a broker may atomically manage its log, while external database, email, and payment effects remain separate. I would define the SLO, instrument the critical path, and validate the decision under realistic load before standardizing it.</div><div class="speak"><strong>Failure signal:</strong> Watch latency percentiles, error/timeout rate, saturation, backlog, and business-level correctness—not averages alone.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How does this behave during a partial outage or retry surge?</li><li>Which trade-off would make you reverse this decision?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Bound concurrency and retries, use deadlines and backpressure, preserve idempotency, and make degradation explicit. Recovery must be tested, not assumed.</div><div class="speak">Reverse the choice when measured complexity, tail latency, consistency risk, or on-call burden exceeds the isolation or scaling benefit.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Sketch a production-ready use of exactly-once concepts. Include SLOs, telemetry, one failure injection, and a rollback or recovery path.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="idempotent-consumers">
+    <div class="topic-head">
+      <h3>Idempotent consumers</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>An idempotent consumer stores message identity or enforces the business invariant in the same transaction as its effect.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>A check-then-act outside the transaction races under concurrent duplicate deliveries.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>await db.transaction(async tx =&gt; {
+  const claimed = await tx.processed.insertIgnore({ consumer: 'inventory', eventId });
+  if (!claimed) return;
+  await tx.stock.decrementWhereAvailable(orderId, sku, qty);
+  await tx.outbox.insert(inventoryReservedEvent);
+});</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating idempotent consumers as a product choice without measuring its operational cost.</li><li>Explaining only the happy path; senior answers include overload, partial failure, and recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain idempotent consumers and when you would use it.</li><li>What production signal tells you this design is failing?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak"><strong>Model answer:</strong> An idempotent consumer stores message identity or enforces the business invariant in the same transaction as its effect. I would define the SLO, instrument the critical path, and validate the decision under realistic load before standardizing it.</div><div class="speak"><strong>Failure signal:</strong> Watch latency percentiles, error/timeout rate, saturation, backlog, and business-level correctness—not averages alone.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How does this behave during a partial outage or retry surge?</li><li>Which trade-off would make you reverse this decision?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Bound concurrency and retries, use deadlines and backpressure, preserve idempotency, and make degradation explicit. Recovery must be tested, not assumed.</div><div class="speak">Reverse the choice when measured complexity, tail latency, consistency risk, or on-call burden exceeds the isolation or scaling benefit.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Sketch a production-ready use of idempotent consumers. Include SLOs, telemetry, one failure injection, and a rollback or recovery path.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="event-driven-architecture">
+    <div class="topic-head">
+      <h3>Event-driven architecture</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>The pipeline is a chain of observable state transitions, not a chain of hidden remote calls.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Events decouple availability and scaling but demand contract governance, correlation, compensation, and end-to-end lag SLOs.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Order Created → Payment → Inventory → Notification
+Correlate every event with orderId, traceId, causationId, eventId, version, and occurredAt.</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating event-driven architecture as a product choice without measuring its operational cost.</li><li>Explaining only the happy path; senior answers include overload, partial failure, and recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain event-driven architecture and when you would use it.</li><li>What production signal tells you this design is failing?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak"><strong>Model answer:</strong> The pipeline is a chain of observable state transitions, not a chain of hidden remote calls. I would define the SLO, instrument the critical path, and validate the decision under realistic load before standardizing it.</div><div class="speak"><strong>Failure signal:</strong> Watch latency percentiles, error/timeout rate, saturation, backlog, and business-level correctness—not averages alone.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How does this behave during a partial outage or retry surge?</li><li>Which trade-off would make you reverse this decision?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Bound concurrency and retries, use deadlines and backpressure, preserve idempotency, and make degradation explicit. Recovery must be tested, not assumed.</div><div class="speak">Reverse the choice when measured complexity, tail latency, consistency risk, or on-call burden exceeds the isolation or scaling benefit.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Sketch a production-ready use of event-driven architecture. Include SLOs, telemetry, one failure injection, and a rollback or recovery path.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+          
+          
+          <div class="phase-nav"><a class="btn btn-ghost" href="09-microservices.html">← Microservices</a><a class="btn btn-primary" href="11-system-design.html">System Design →</a></div>
+        </div>
+      </div>
+      <footer class="fine">Phase 10 · Node.js / TypeScript interview preparation</footer>
+    </main>
+  </div>
+  <script src="../assets/prep.js"></script>
+</body>
+</html>

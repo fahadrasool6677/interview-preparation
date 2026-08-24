@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Senior Node.js Projects — Node.js Interview Prep</title>
+  <link rel="stylesheet" href="../assets/prep.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" />
+</head>
+<body data-page="phase" data-phase="16">
+  <div class="app">
+    <nav class="sidebar">
+      <h1>Node.js Interview Prep</h1>
+      <p class="tag">5-year · Backend / Full-stack · Senior track</p>
+      <a class="nav-link" href="../nodejs-interview-preparation.html">← Hub</a>
+      <div class="nav-group">Phases</div>
+      <div id="phase-links">
+        <a class="nav-link" href="01-javascript.html">01 JavaScript</a>
+        <a class="nav-link" href="02-nodejs.html">02 Node.js</a>
+        <a class="nav-link" href="03-typescript.html">03 TypeScript</a>
+        <a class="nav-link" href="04-express.html">04 Express</a>
+        <a class="nav-link" href="05-rest.html">05 REST APIs</a>
+        <a class="nav-link" href="06-databases.html">06 Databases</a>
+        <a class="nav-link" href="07-redis.html">07 Redis</a>
+        <a class="nav-link" href="08-auth-security.html">08 Auth &amp; Security</a>
+        <a class="nav-link" href="09-microservices.html">09 Microservices</a>
+        <a class="nav-link" href="10-queues.html">10 Queues</a>
+        <a class="nav-link" href="11-system-design.html">11 System Design</a>
+        <a class="nav-link" href="12-performance.html">12 Performance</a>
+        <a class="nav-link" href="13-docker.html">13 Docker &amp; Deploy</a>
+        <a class="nav-link" href="14-testing.html">14 Testing</a>
+        <a class="nav-link" href="15-coding.html">15 Coding</a>
+        <a class="nav-link" href="16-projects.html">16 Projects</a>
+      </div>
+      <div class="meta">Mark topics reviewed as you go. Progress is stored in this browser.</div>
+    </nav>
+    <main>
+      <p class="kicker">Phase 16 · Portfolio systems</p>
+      <header class="hero">
+        <h2>Senior Node.js Projects</h2>
+        <p class="lead">Build systems that demonstrate correctness, security, testing, operations, and scaling—not just framework fluency.</p>
+      </header>
+      <div class="note">Interview shape: claim → mechanism → production example → failure → trade-off. Reveal answers only after you attempt them aloud.</div>
+      <div class="phase-layout">
+        <aside class="toc">
+          <strong>On this page</strong>
+          <div class="toc-list"></div>
+        </aside>
+        <div class="topics">
+          
+          
+          
+  <article class="topic" id="production-rest-api">
+    <div class="topic-head">
+      <h3>Production-style REST API</h3>
+      <span class="badge high">Project</span>
+    </div>
+    <p>Build a versioned TypeScript API whose quality is visible through contracts, operations, and failure handling—not only CRUD endpoints.</p>
+    <div class="design-block"><h4>Requirements</h4><ul><li>CRUD plus filtering, cursor pagination, idempotent writes, validation, and consistent errors.</li><li>OpenAPI contract, request IDs, structured logs, metrics, traces, health and readiness endpoints.</li></ul></div><div class="design-block"><h4>Architecture</h4><ul><li>Layer HTTP adapters, application use cases, domain policy, and infrastructure adapters.</li><li>Use dependency injection at composition roots; define timeout and transaction boundaries explicitly.</li></ul></div><div class="design-block"><h4>Database</h4><ul><li>Postgres migrations, constraints, indexes, optimistic concurrency, and transaction-safe writes.</li><li>Explain query plans and pagination stability.</li></ul></div><div class="design-block"><h4>APIs</h4><ul><li>POST /v1/resources with Idempotency-Key; GET collection with opaque cursor.</li><li>PATCH with version precondition; standard problem-details errors.</li></ul></div><div class="design-block"><h4>Security</h4><ul><li>Authentication, object-level authorization, schema validation, rate limits, secure headers, secret management.</li><li>Threat model injection, mass assignment, data exposure, and abuse.</li></ul></div><div class="design-block"><h4>Testing</h4><ul><li>Unit-test domain policy, integrate against real Postgres, contract-test HTTP, and E2E critical flow.</li><li>Include concurrency, migration, and failure-path tests.</li></ul></div><div class="design-block"><h4>Performance</h4><ul><li>Profile p95/p99 latency, bound request bodies and query work, pool database connections.</li><li>Cache only measured read bottlenecks with explicit invalidation.</li></ul></div><div class="design-block"><h4>Scaling</h4><ul><li>Run stateless instances behind a load balancer; move slow work to durable workers.</li><li>Partition by tenant only after measuring contention.</li></ul></div><div class="design-block"><h4>Failure handling</h4><ul><li>Graceful shutdown, dependency timeouts, bounded retries, circuit breaking, rollback, and degraded responses.</li><li>Run a database outage and slow-dependency game day.</li></ul></div>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="authentication-system">
+    <div class="topic-head">
+      <h3>Authentication system</h3>
+      <span class="badge high">Project</span>
+    </div>
+    <p>Implement secure session and token lifecycles, authorization boundaries, and auditable account recovery.</p>
+    <div class="design-block"><h4>Requirements</h4><ul><li>Registration, verification, login, logout, password reset, session management, MFA-ready design.</li><li>Account lockout and suspicious-login audit trail without enabling denial-of-service abuse.</li></ul></div><div class="design-block"><h4>Architecture</h4><ul><li>Separate identity proof, credential storage, session issuance, and authorization policy.</li><li>Use a dedicated notification adapter and outbox for security emails.</li></ul></div><div class="design-block"><h4>Database</h4><ul><li>Users, normalized identities, Argon2id password hashes, hashed reset tokens, sessions, audit events.</li><li>Unique constraints and transactional token consumption.</li></ul></div><div class="design-block"><h4>APIs</h4><ul><li>POST /auth/login, /logout, /refresh, /forgot-password, /reset-password.</li><li>GET/DELETE active sessions; avoid leaking whether an account exists.</li></ul></div><div class="design-block"><h4>Security</h4><ul><li>HttpOnly Secure SameSite cookies or carefully scoped tokens; rotation and reuse detection.</li><li>CSRF defense, rate limits, constant-shaped responses, key rotation, short-lived credentials.</li></ul></div><div class="design-block"><h4>Testing</h4><ul><li>Test expiry, replay, fixation, revocation, concurrent refresh, enumeration resistance, and authorization.</li><li>Use a controllable clock and real database constraints.</li></ul></div><div class="design-block"><h4>Performance</h4><ul><li>Bound password-hash cost and login concurrency; index active sessions.</li><li>Cache authorization cautiously and preserve revocation semantics.</li></ul></div><div class="design-block"><h4>Scaling</h4><ul><li>Shared durable session state or independently verifiable access tokens plus centralized refresh state.</li><li>Rotate signing keys through a published key set.</li></ul></div><div class="design-block"><h4>Failure handling</h4><ul><li>Fail closed for authorization, preserve logout/revocation, and queue noncritical email.</li><li>Handle key compromise and credential-stuffing incident response.</li></ul></div>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="order-processing-system">
+    <div class="topic-head">
+      <h3>Order processing system</h3>
+      <span class="badge high">Project</span>
+    </div>
+    <p>Design an order workflow that remains correct across payment, inventory, and delivery failures.</p>
+    <div class="design-block"><h4>Requirements</h4><ul><li>Create order, reserve inventory, authorize payment, confirm or compensate, expose status history.</li><li>Idempotent commands and at-least-once event consumption.</li></ul></div><div class="design-block"><h4>Architecture</h4><ul><li>Model an explicit state machine and saga; avoid distributed transactions across services.</li><li>Use transactional outbox/inbox and durable workers.</li></ul></div><div class="design-block"><h4>Database</h4><ul><li>Orders, line items, state transitions, idempotency records, outbox, inventory reservations.</li><li>Constraints enforce legal uniqueness; transactions atomically update state and outbox.</li></ul></div><div class="design-block"><h4>APIs</h4><ul><li>POST /orders with idempotency key; GET /orders/:id; POST cancellation.</li><li>Webhook/callback endpoints authenticate sources and deduplicate events.</li></ul></div><div class="design-block"><h4>Security</h4><ul><li>Authorize order ownership, tokenize payment data, minimize PCI scope, redact sensitive logs.</li><li>Sign internal messages where trust boundaries require it.</li></ul></div><div class="design-block"><h4>Testing</h4><ul><li>State-machine and property tests; integration tests for outbox; E2E happy and compensation paths.</li><li>Inject duplicate, reordered, delayed, and poison messages.</li></ul></div><div class="design-block"><h4>Performance</h4><ul><li>Keep synchronous checkout path short; batch workers and index pending states.</li><li>Track checkout latency, reservation age, queue lag, and reconciliation mismatches.</li></ul></div><div class="design-block"><h4>Scaling</h4><ul><li>Partition order streams by order ID to preserve per-order ordering.</li><li>Scale independent consumers and apply downstream backpressure.</li></ul></div><div class="design-block"><h4>Failure handling</h4><ul><li>Reconcile ambiguous payment outcomes; release expired reservations; dead-letter poison events.</li><li>Operators need replay tools that remain idempotent and auditable.</li></ul></div>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="webhook-processing-service">
+    <div class="topic-head">
+      <h3>Webhook processing service</h3>
+      <span class="badge high">Project</span>
+    </div>
+    <p>Receive untrusted provider callbacks quickly, durably, and idempotently despite retries and reordering.</p>
+    <div class="design-block"><h4>Requirements</h4><ul><li>Verify signatures on raw bodies, acknowledge quickly, deduplicate, process asynchronously, support replay.</li><li>Per-provider schemas, secrets, rate limits, and observability.</li></ul></div><div class="design-block"><h4>Architecture</h4><ul><li>Ingress validates and persists an envelope, then a queue dispatches provider-specific workers.</li><li>Separate receipt from business processing and retain auditable outcomes.</li></ul></div><div class="design-block"><h4>Database</h4><ul><li>Unique provider/event ID, payload hash, receipt time, status, attempt history, and retention policy.</li><li>Inbox transaction prevents duplicate side effects.</li></ul></div><div class="design-block"><h4>APIs</h4><ul><li>POST /webhooks/:provider with provider-specific signature and timestamp headers.</li><li>Internal replay and inspection APIs require strong operator authorization.</li></ul></div><div class="design-block"><h4>Security</h4><ul><li>Constant-time signature verification, timestamp tolerance, secret rotation, payload/body limits.</li><li>Treat payload as untrusted and prevent SSRF in referenced URLs.</li></ul></div><div class="design-block"><h4>Testing</h4><ul><li>Provider contract fixtures; altered signature/body tests; duplicate and out-of-order delivery.</li><li>Crash between persistence and acknowledgement, then prove recovery.</li></ul></div><div class="design-block"><h4>Performance</h4><ul><li>Avoid business work on ingress; control queue concurrency per provider/tenant.</li><li>Measure acknowledgement latency, processing lag, duplicates, failures, and oldest event age.</li></ul></div><div class="design-block"><h4>Scaling</h4><ul><li>Stateless ingress and partitioned durable queue; ordering key by external aggregate where needed.</li><li>Autoscale workers on lag while protecting downstream services.</li></ul></div><div class="design-block"><h4>Failure handling</h4><ul><li>Retry transient errors with jitter; dead-letter permanent failures; provide safe replay.</li><li>Handle provider retry storms and unavailable queue/storage explicitly.</li></ul></div>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="event-driven-notifications">
+    <div class="topic-head">
+      <h3>Event-driven notification system</h3>
+      <span class="badge high">Project</span>
+    </div>
+    <p>Deliver email, SMS, and push notifications from domain events with preferences, templates, and provider resilience.</p>
+    <div class="design-block"><h4>Requirements</h4><ul><li>Consume events, resolve preferences, render versioned templates, send through channels, track delivery.</li><li>Deduplication, scheduling, quiet hours, unsubscribe, retries, and dead letters.</li></ul></div><div class="design-block"><h4>Architecture</h4><ul><li>Event consumer creates notification intents; channel workers call providers behind adapters.</li><li>Outbox emits status events and isolates template/policy from transport.</li></ul></div><div class="design-block"><h4>Database</h4><ul><li>Notification intents, channel attempts, preferences, template versions, dedupe keys.</li><li>Retention and partitioning support high-volume history.</li></ul></div><div class="design-block"><h4>APIs</h4><ul><li>Preference and template management; operator search/replay; provider delivery callbacks.</li><li>Domain producers publish events rather than invoking notification providers.</li></ul></div><div class="design-block"><h4>Security</h4><ul><li>Authorize preference changes, validate templates, encrypt contact data, redact logs.</li><li>Signed unsubscribe links and provider callback verification.</li></ul></div><div class="design-block"><h4>Testing</h4><ul><li>Policy matrix tests, golden template tests, provider contract tests, duplicate event tests.</li><li>Simulate throttling, bounce callbacks, partial channel failures, and replay.</li></ul></div><div class="design-block"><h4>Performance</h4><ul><li>Batch provider calls where supported and cache templates/preferences with versioned keys.</li><li>Track time-to-send, queue lag, provider latency, bounce and suppression rates.</li></ul></div><div class="design-block"><h4>Scaling</h4><ul><li>Partition by recipient for ordering and by channel for independent capacity.</li><li>Apply quotas, priority queues, and backpressure during campaigns.</li></ul></div><div class="design-block"><h4>Failure handling</h4><ul><li>Fallback channels only with explicit product policy; avoid retrying permanent bounces.</li><li>Circuit-break failing providers and preserve intents for controlled recovery.</li></ul></div>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="product-synchronization">
+    <div class="topic-head">
+      <h3>Scalable product synchronization service</h3>
+      <span class="badge high">Project</span>
+    </div>
+    <p>Synchronize a large product catalog across an authoritative source and multiple external destinations.</p>
+    <div class="design-block"><h4>Requirements</h4><ul><li>Initial backfill, incremental change capture, mapping, validation, reconciliation, replay, progress visibility.</li><li>At-least-once delivery with idempotent destination writes.</li></ul></div><div class="design-block"><h4>Architecture</h4><ul><li>Snapshot reader and CDC feed produce versioned product changes into partitioned queues.</li><li>Destination adapters normalize limits; reconciliation detects drift independently.</li></ul></div><div class="design-block"><h4>Database</h4><ul><li>Source cursor/checkpoint, canonical product/version, destination mapping, sync attempts, errors.</li><li>Use compare-and-set checkpoints so acknowledged progress never skips failed records.</li></ul></div><div class="design-block"><h4>APIs</h4><ul><li>Start/cancel/status sync jobs; inspect and replay failures; destination adapter bulk upserts.</li><li>Opaque cursors and bounded pages for large catalogs.</li></ul></div><div class="design-block"><h4>Security</h4><ul><li>Per-tenant credentials in a secret manager, least-privilege destination scopes, encrypted data.</li><li>Validate imported content and prevent tenant data crossover.</li></ul></div><div class="design-block"><h4>Testing</h4><ul><li>Mapping and property tests, adapter contract tests, checkpoint crash recovery, reconciliation tests.</li><li>Duplicate, stale, reordered, malformed, and rate-limited destination responses.</li></ul></div><div class="design-block"><h4>Performance</h4><ul><li>Adaptive batches, bounded concurrency, streaming reads, bulk writes, compressed events.</li><li>Measure throughput, lag, memory, destination quota, and reconciliation drift.</li></ul></div><div class="design-block"><h4>Scaling</h4><ul><li>Partition by tenant/product while preserving per-product versions; fair scheduling prevents noisy neighbors.</li><li>Autoscale consumers on lag but cap against destination quotas.</li></ul></div><div class="design-block"><h4>Failure handling</h4><ul><li>Backoff with jitter and Retry-After; quarantine poison products; resume from durable checkpoints.</li><li>Reconciliation repairs missed events and operator replay remains version-aware.</li></ul></div>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+          <div class="phase-nav"><a class="btn btn-ghost" href="15-coding.html">← Phase 15 · Coding</a><a class="btn btn-primary" href="../nodejs-interview-preparation.html">Back to hub</a></div>
+        </div>
+      </div>
+      <footer class="fine">Phase 16 · Node.js / TypeScript interview preparation</footer>
+    </main>
+  </div>
+  <script src="../assets/prep.js"></script>
+</body>
+</html>

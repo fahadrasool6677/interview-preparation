@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Redis — Node.js Interview Prep</title>
+  <link rel="stylesheet" href="../assets/prep.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" />
+</head>
+<body data-page="phase" data-phase="07">
+  <div class="app">
+    <nav class="sidebar">
+      <h1>Node.js Interview Prep</h1>
+      <p class="tag">5-year · Backend / Full-stack · Senior track</p>
+      <a class="nav-link" href="../nodejs-interview-preparation.html">← Hub</a>
+      <div class="nav-group">Phases</div>
+      <div id="phase-links">
+        <a class="nav-link" href="01-javascript.html">01 JavaScript</a>
+        <a class="nav-link" href="02-nodejs.html">02 Node.js</a>
+        <a class="nav-link" href="03-typescript.html">03 TypeScript</a>
+        <a class="nav-link" href="04-express.html">04 Express</a>
+        <a class="nav-link" href="05-rest.html">05 REST APIs</a>
+        <a class="nav-link" href="06-databases.html">06 Databases</a>
+        <a class="nav-link" href="07-redis.html">07 Redis</a>
+        <a class="nav-link" href="08-auth-security.html">08 Auth &amp; Security</a>
+        <a class="nav-link" href="09-microservices.html">09 Microservices</a>
+        <a class="nav-link" href="10-queues.html">10 Queues</a>
+        <a class="nav-link" href="11-system-design.html">11 System Design</a>
+        <a class="nav-link" href="12-performance.html">12 Performance</a>
+        <a class="nav-link" href="13-docker.html">13 Docker &amp; Deploy</a>
+        <a class="nav-link" href="14-testing.html">14 Testing</a>
+        <a class="nav-link" href="15-coding.html">15 Coding</a>
+        <a class="nav-link" href="16-projects.html">16 Projects</a>
+      </div>
+      <div class="meta">Mark topics reviewed as you go. Progress is stored in this browser.</div>
+    </nav>
+    <main>
+      <p class="kicker">Phase 07 · Low-latency state with explicit failure modes</p>
+      <header class="hero">
+        <h2>Redis</h2>
+        <p class="lead">Use Redis for caching, coordination, limits, and sessions without mistaking a fast distributed system for a correctness boundary.</p>
+      </header>
+      <div class="note">Interview shape: claim → mechanism → production example → failure → trade-off. Reveal answers only after you attempt them aloud.</div>
+      <div class="phase-layout">
+        <aside class="toc">
+          <strong>On this page</strong>
+          <div class="toc-list"></div>
+        </aside>
+        <div class="topics">
+          
+  <article class="topic" id="redis-fundamentals">
+    <div class="topic-head">
+      <h3>Redis fundamentals</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Redis is an in-memory data-structure server with single-threaded command execution per shard, optional persistence, replication, clustering, and atomic commands/scripts.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Low latency comes from memory and efficient structures, but durability, failover, hot keys, and memory eviction must be designed explicitly.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>SET order:101:status paid
+GET order:101:status
+INFO memory
+INFO replication</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Fast does not mean durable or strongly consistent across failover</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating Redis fundamentals as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply Redis fundamentals to an order/payment API?</li><li>What failure mode changes your design for Redis fundamentals?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Redis fundamentals should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default Redis fundamentals approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready Redis fundamentals decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="key-value-storage">
+    <div class="topic-head">
+      <h3>Key/value storage</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Keys should encode namespace and identity; values may be strings, hashes, sets, sorted sets, streams, or probabilistic structures.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Data-structure choice controls atomic operations, memory use, and access patterns.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>HSET order:101 status paid totalMinor 4999 currency USD
+HGETALL order:101
+SADD customer:7:orders 101</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Bound key/value sizes and avoid unbounded collections</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating Key/value storage as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply Key/value storage to an order/payment API?</li><li>What failure mode changes your design for Key/value storage?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Key/value storage should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default Key/value storage approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready Key/value storage decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="ttl">
+    <div class="topic-head">
+      <h3>TTL</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>TTL sets automatic expiry in seconds or milliseconds. Expiry is metadata on the key and may be refreshed, preserved, or removed by writes depending on the command.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>TTL bounds staleness and memory but is not precise scheduling or guaranteed immediate deletion.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>SET order:101:summary '{...}' EX 60
+TTL order:101:summary
+EXPIRE order:101:summary 120 GT</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Positive TTL counts down; -1 means no expiry; -2 means absent</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating TTL as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply TTL to an order/payment API?</li><li>What failure mode changes your design for TTL?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">TTL should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default TTL approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready TTL decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="cache-aside">
+    <div class="topic-head">
+      <h3>Cache-aside</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>The application reads cache, falls back to the database on miss, then populates cache; writes update the database and invalidate or refresh cache.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Only requested data is cached and cache failure can degrade to the source, but races can reinsert stale data.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>let order = await redis.get(key);
+if (!order) {
+  order = await db.order.findUnique({ where: { id } });
+  await redis.set(key, JSON.stringify(order), { EX: 60 });
+}
+return JSON.parse(order);</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Hit avoids DB; miss populates a bounded-TTL entry</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating Cache-aside as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply Cache-aside to an order/payment API?</li><li>What failure mode changes your design for Cache-aside?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Cache-aside should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default Cache-aside approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready Cache-aside decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="write-through">
+    <div class="topic-head">
+      <h3>Write-through</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Writes synchronously update the system of record and cache before success is returned, with an explicit ordering and compensation policy.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Reads stay warm, but dual writes cannot be atomic across Redis and the database without accepting or repairing inconsistency.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>1. Commit order to PostgreSQL
+2. SET cache value with TTL
+3. If cache write fails, return success and invalidate/retry asynchronously</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Database remains source of truth</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating Write-through as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply Write-through to an order/payment API?</li><li>What failure mode changes your design for Write-through?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Write-through should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default Write-through approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready Write-through decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="write-behind">
+    <div class="topic-head">
+      <h3>Write-behind</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Writes land in a cache or durable buffer and are persisted asynchronously in batches.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>It reduces write latency and enables batching but risks data loss, reorder, and harder recovery; plain Redis cache is rarely suitable for payment truth.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Client → durable stream → acknowledged
+Worker batches updates → database
+Track offsets, retries, poison records, and idempotency</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Do not use volatile write-behind for financial state</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating Write-behind as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply Write-behind to an order/payment API?</li><li>What failure mode changes your design for Write-behind?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Write-behind should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default Write-behind approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready Write-behind decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="distributed-cache">
+    <div class="topic-head">
+      <h3>Distributed cache</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>A distributed cache partitions and replicates entries across nodes. Clients must handle topology, failover, serialization versions, and partial outages.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>It increases shared capacity but introduces network latency, hot-key concentration, replication lag, and failover consistency windows.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Key includes tenant and schema version:
+v3:tenant:acme:order:101
+Hash tags only when multi-key colocation is required:
+{order:101}:summary</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Measure hit ratio, p95 latency, evictions, errors, and hot keys</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating Distributed cache as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply Distributed cache to an order/payment API?</li><li>What failure mode changes your design for Distributed cache?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Distributed cache should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default Distributed cache approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready Distributed cache decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="distributed-locks">
+    <div class="topic-head">
+      <h3>Distributed locks</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>A Redis lock commonly uses SET key token NX PX ttl and a compare-token-and-delete Lua script. The lease can expire while work continues.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>The random token prevents deleting another owner's lease, but a lock alone cannot protect a correctness-critical resource from paused or partitioned clients.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>SET lock:order:101 &lt;random-token&gt; NX PX 5000
+-- release atomically only if GET(key) == token
+-- pass a monotonic fencing token to the protected store</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Use database constraints/transactions for payment invariants; fencing for stale owners</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating Distributed locks as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply Distributed locks to an order/payment API?</li><li>What failure mode changes your design for Distributed locks?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Distributed locks should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default Distributed locks approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready Distributed locks decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="rate-limiting">
+    <div class="topic-head">
+      <h3>Rate limiting</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Redis implements atomic fixed/sliding windows, token buckets, or GCRA near the request path, keyed by authenticated tenant/user/action.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Shared atomic state coordinates many API instances, but outage policy and cluster key placement matter.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Lua atomically:
+1. refill tokens by elapsed time
+2. consume cost if available
+3. return allowed, remaining, retryAfter
+Key: rl:tenant:acme:payment:create</pre>
+        <div class="expected"><strong>Expected:</strong><pre>429 with Retry-After; fail closed only for high-risk actions</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating Rate limiting as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply Rate limiting to an order/payment API?</li><li>What failure mode changes your design for Rate limiting?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Rate limiting should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default Rate limiting approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready Rate limiting decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="sessions">
+    <div class="topic-head">
+      <h3>Sessions</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Store opaque session records in Redis with TTL, rotate IDs after authentication or privilege change, and index user sessions for revocation.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Redis provides shared low-latency session state, while expiry and deletion support logout and revocation.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>SET session:&lt;sha256-id&gt; '{&quot;userId&quot;:17,&quot;roles&quot;:[&quot;buyer&quot;]}' EX 1800
+SADD user:17:sessions &lt;sha256-id&gt;
+On logout: DEL + SREM</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Cookie contains only an opaque Secure HttpOnly session ID</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating Sessions as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply Sessions to an order/payment API?</li><li>What failure mode changes your design for Sessions?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Sessions should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default Sessions approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready Sessions decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="pub-sub">
+    <div class="topic-head">
+      <h3>Pub/Sub</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Redis Pub/Sub delivers transient messages to currently connected subscribers with no replay, acknowledgement, or consumer state.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>It is useful for ephemeral notifications and invalidation hints, not durable order/payment processing.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>PUBLISH cache-invalidate '{&quot;orderId&quot;:101,&quot;version&quot;:8}'
+SUBSCRIBE cache-invalidate</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Disconnected subscribers miss messages; use Streams/queue for durable work</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating Pub/Sub as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply Pub/Sub to an order/payment API?</li><li>What failure mode changes your design for Pub/Sub?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Pub/Sub should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default Pub/Sub approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready Pub/Sub decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="scenario-cache-expensive-api">
+    <div class="topic-head">
+      <h3>Cache an expensive API</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Cache normalized expensive responses by tenant, authorization-sensitive inputs, API version, and query fingerprint; use TTL, bounds, and negative caching selectively.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>A well-designed key avoids data leakage and maximizes reuse while a stale-if-error policy can protect availability.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>key = sha256('v2|tenant=acme|order=101|currency=USD')
+TTL = 5m + random jitter
+Do not cache provider 401/429 as successful data</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Single-flight fill; metrics separate hit, miss, stale, and bypass</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating Cache an expensive API as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply Cache an expensive API to an order/payment API?</li><li>What failure mode changes your design for Cache an expensive API?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Cache an expensive API should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default Cache an expensive API approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready Cache an expensive API decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="scenario-stale-cache">
+    <div class="topic-head">
+      <h3>Stale cache</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Staleness is controlled with TTL, versioned keys, write invalidation, event-driven invalidation, and explicit stale-while-revalidate windows.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Perfect invalidation across stores is expensive; define an acceptable staleness budget per field and operation.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Cache value: { version: 8, cachedAt: ..., order: ... }
+DB commit emits order.updated(version=9)
+Consumer deletes only cached versions &lt; 9</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Payment status may require primary read; catalog copy can tolerate staleness</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating Stale cache as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply Stale cache to an order/payment API?</li><li>What failure mode changes your design for Stale cache?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Stale cache should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default Stale cache approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready Stale cache decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="scenario-cache-stampede">
+    <div class="topic-head">
+      <h3>Prevent cache stampede</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Use request coalescing/single-flight, short fill locks, TTL jitter, stale-while-revalidate, and proactive refresh for hot keys.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>When a hot key expires, simultaneous misses can overload the database and prolong the outage.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>On miss:
+- one owner gets fill:order:101 lease
+- others serve bounded stale value or wait briefly
+- owner populates with TTL 60s + random(0..10s)</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Lock owner uses timeout; all paths have backpressure</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating Prevent cache stampede as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply Prevent cache stampede to an order/payment API?</li><li>What failure mode changes your design for Prevent cache stampede?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Prevent cache stampede should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default Prevent cache stampede approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready Prevent cache stampede decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="scenario-distributed-locking">
+    <div class="topic-head">
+      <h3>Distributed locking scenario</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>For a scheduled order reconciliation, use a bounded lease for duplicate-work reduction, an owner token, renewal, and idempotent work; use fencing or database state for correctness.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Process pauses and network partitions can create two apparent owners, so the protected system must reject stale writers.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Acquire lease + increment fencing counter → fence=43
+UPDATE orders SET ... WHERE id=101 AND last_fence &lt; 43
+Store last_fence=43 atomically</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Lease limits coordination; fencing enforces ordering</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating Distributed locking scenario as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply Distributed locking scenario to an order/payment API?</li><li>What failure mode changes your design for Distributed locking scenario?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Distributed locking scenario should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default Distributed locking scenario approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready Distributed locking scenario decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+          
+          
+          <div class="phase-nav"><a class="btn btn-ghost" href="06-databases.html">← 06 Databases</a><a class="btn btn-primary" href="08-auth-security.html">08 Auth & Security →</a></div>
+        </div>
+      </div>
+      <footer class="fine">Phase 07 · Node.js / TypeScript interview preparation</footer>
+    </main>
+  </div>
+  <script src="../assets/prep.js"></script>
+</body>
+</html>

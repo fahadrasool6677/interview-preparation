@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Docker &amp; Deployment — Node.js Interview Prep</title>
+  <link rel="stylesheet" href="../assets/prep.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" />
+</head>
+<body data-page="phase" data-phase="13">
+  <div class="app">
+    <nav class="sidebar">
+      <h1>Node.js Interview Prep</h1>
+      <p class="tag">5-year · Backend / Full-stack · Senior track</p>
+      <a class="nav-link" href="../nodejs-interview-preparation.html">← Hub</a>
+      <div class="nav-group">Phases</div>
+      <div id="phase-links">
+        <a class="nav-link" href="01-javascript.html">01 JavaScript</a>
+        <a class="nav-link" href="02-nodejs.html">02 Node.js</a>
+        <a class="nav-link" href="03-typescript.html">03 TypeScript</a>
+        <a class="nav-link" href="04-express.html">04 Express</a>
+        <a class="nav-link" href="05-rest.html">05 REST APIs</a>
+        <a class="nav-link" href="06-databases.html">06 Databases</a>
+        <a class="nav-link" href="07-redis.html">07 Redis</a>
+        <a class="nav-link" href="08-auth-security.html">08 Auth &amp; Security</a>
+        <a class="nav-link" href="09-microservices.html">09 Microservices</a>
+        <a class="nav-link" href="10-queues.html">10 Queues</a>
+        <a class="nav-link" href="11-system-design.html">11 System Design</a>
+        <a class="nav-link" href="12-performance.html">12 Performance</a>
+        <a class="nav-link" href="13-docker.html">13 Docker &amp; Deploy</a>
+        <a class="nav-link" href="14-testing.html">14 Testing</a>
+        <a class="nav-link" href="15-coding.html">15 Coding</a>
+        <a class="nav-link" href="16-projects.html">16 Projects</a>
+      </div>
+      <div class="meta">Mark topics reviewed as you go. Progress is stored in this browser.</div>
+    </nav>
+    <main>
+      <p class="kicker">Phase 13 · Production runtime</p>
+      <header class="hero">
+        <h2>Docker &amp; Deployment</h2>
+        <p class="lead">Package, ship, secure, observe, and recover Node.js services with explicit operational trade-offs.</p>
+      </header>
+      <div class="note">Interview shape: claim → mechanism → production example → failure → trade-off. Reveal answers only after you attempt them aloud.</div>
+      <div class="phase-layout">
+        <aside class="toc">
+          <strong>On this page</strong>
+          <div class="toc-list"></div>
+        </aside>
+        <div class="topics">
+          
+  <article class="topic" id="docker">
+    <div class="topic-head">
+      <h3>Docker</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Docker packages a process and its filesystem dependencies into an image, then runs it with namespace isolation and cgroup resource controls. Containers share the host kernel; they are not lightweight virtual machines.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>A consistent artifact reduces environment drift from laptop to CI to production. Isolation improves repeatability, but host kernel, storage, networking, and security still require explicit operational design.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>docker build -t orders-api:1.4.0 .
+docker run --rm -p 3000:3000 --memory=512m --cpus=1 orders-api:1.4.0</pre>
+        <div class="expected"><strong>Expected:</strong><pre>The immutable image runs with bounded CPU and memory.</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Docker as syntax or tooling without discussing its runtime behavior.</li><li>Ignoring observability, rollback, resource limits, and failure recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Where does Docker fit in a production Node.js system?</li><li>What failure mode would make you reconsider your Docker design?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Docker should solve a specific operational or engineering constraint. I would state that constraint, describe the mechanism, and then show how I verify the result in production.</div><div class="speak">I would reconsider the design when its failure domain, operating cost, or recovery time no longer meets the service's SLOs.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How would you operate Docker safely during a partial outage?</li><li>Which metrics and trade-offs matter most for Docker?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Prefer bounded retries, explicit timeouts, graceful degradation, and a tested rollback path. Preserve enough telemetry to distinguish application, dependency, and infrastructure failures.</div><div class="speak">Measure user-visible latency and errors first, then saturation, capacity, cost, and recovery time. Optimize only after identifying the binding constraint.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Containerize a small Node.js API, apply CPU and memory limits, then observe its behavior under load and on SIGTERM.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="dockerfile">
+    <div class="topic-head">
+      <h3>Dockerfile</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>A Dockerfile is an ordered build recipe. Each filesystem-changing instruction creates a cacheable layer, while ENTRYPOINT and CMD define the runtime process.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Instruction order controls cache reuse and rebuild speed. Exec-form commands deliver signals correctly, which is essential for graceful Node.js shutdown.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>FROM node:22-alpine
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --omit=dev
+COPY . .
+USER node
+EXPOSE 3000
+CMD [&quot;node&quot;, &quot;server.js&quot;]</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Copying the whole repository before npm ci, invalidating dependency cache.</li><li>Using a shell-form CMD or running the service as root.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Where does Dockerfile fit in a production Node.js system?</li><li>What failure mode would make you reconsider your Dockerfile design?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Dockerfile should solve a specific operational or engineering constraint. I would state that constraint, describe the mechanism, and then show how I verify the result in production.</div><div class="speak">I would reconsider the design when its failure domain, operating cost, or recovery time no longer meets the service's SLOs.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How would you operate Dockerfile safely during a partial outage?</li><li>Which metrics and trade-offs matter most for Dockerfile?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Prefer bounded retries, explicit timeouts, graceful degradation, and a tested rollback path. Preserve enough telemetry to distinguish application, dependency, and infrastructure failures.</div><div class="speak">Measure user-visible latency and errors first, then saturation, capacity, cost, and recovery time. Optimize only after identifying the binding constraint.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Write a Dockerfile that caches dependency installation, runs as a non-root user, and responds correctly to SIGTERM.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="docker-compose">
+    <div class="topic-head">
+      <h3>Docker Compose</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Compose declares a multi-container development or single-host stack: services, networks, volumes, environment, health checks, and dependency relationships.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>It makes local infrastructure reproducible, but depends_on only orders startup unless health conditions are configured; the application must still retry unavailable dependencies.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>services:
+  api:
+    build: .
+    ports: [&quot;3000:3000&quot;]
+    depends_on:
+      postgres:
+        condition: service_healthy
+  postgres:
+    image: postgres:17-alpine
+    healthcheck:
+      test: [&quot;CMD-SHELL&quot;, &quot;pg_isready -U postgres&quot;]
+      interval: 5s
+      timeout: 3s
+      retries: 10</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Docker Compose as syntax or tooling without discussing its runtime behavior.</li><li>Ignoring observability, rollback, resource limits, and failure recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Where does Docker Compose fit in a production Node.js system?</li><li>What failure mode would make you reconsider your Docker Compose design?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Docker Compose should solve a specific operational or engineering constraint. I would state that constraint, describe the mechanism, and then show how I verify the result in production.</div><div class="speak">I would reconsider the design when its failure domain, operating cost, or recovery time no longer meets the service's SLOs.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How would you operate Docker Compose safely during a partial outage?</li><li>Which metrics and trade-offs matter most for Docker Compose?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Prefer bounded retries, explicit timeouts, graceful degradation, and a tested rollback path. Preserve enough telemetry to distinguish application, dependency, and infrastructure failures.</div><div class="speak">Measure user-visible latency and errors first, then saturation, capacity, cost, and recovery time. Optimize only after identifying the binding constraint.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a Compose stack for an API, Postgres, and Redis with health checks and no hard-coded credentials.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="images">
+    <div class="topic-head">
+      <h3>Images</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>An image is a content-addressed, immutable manifest of read-only layers plus runtime metadata. Tags are mutable references; digests identify exact content.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Layer reuse saves transfer and storage, while digest pinning makes a deployment reproducible and auditable.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>docker pull node:22-alpine
+docker image inspect node:22-alpine --format '{{index .RepoDigests 0}}'
+docker history node:22-alpine</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Inspect the pinned digest and image layers.</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Images as syntax or tooling without discussing its runtime behavior.</li><li>Ignoring observability, rollback, resource limits, and failure recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Where does Images fit in a production Node.js system?</li><li>What failure mode would make you reconsider your Images design?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Images should solve a specific operational or engineering constraint. I would state that constraint, describe the mechanism, and then show how I verify the result in production.</div><div class="speak">I would reconsider the design when its failure domain, operating cost, or recovery time no longer meets the service's SLOs.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How would you operate Images safely during a partial outage?</li><li>Which metrics and trade-offs matter most for Images?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Prefer bounded retries, explicit timeouts, graceful degradation, and a tested rollback path. Preserve enough telemetry to distinguish application, dependency, and infrastructure failures.</div><div class="speak">Measure user-visible latency and errors first, then saturation, capacity, cost, and recovery time. Optimize only after identifying the binding constraint.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Compare two image versions by digest, size, package inventory, and vulnerability report.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="containers">
+    <div class="topic-head">
+      <h3>Containers</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>A container is a running image plus a writable layer and runtime configuration. Its lifecycle should be disposable; durable state belongs outside it.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Schedulers replace failed instances rather than repairing them. Stateless processes enable horizontal scaling and predictable recovery.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>docker run -d --name api --restart=on-failure:3 orders-api:1.4.0
+docker inspect api --format '{{.State.Status}} {{.State.Health.Status}}'
+docker stop --time 20 api</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Containers as syntax or tooling without discussing its runtime behavior.</li><li>Ignoring observability, rollback, resource limits, and failure recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Where does Containers fit in a production Node.js system?</li><li>What failure mode would make you reconsider your Containers design?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Containers should solve a specific operational or engineering constraint. I would state that constraint, describe the mechanism, and then show how I verify the result in production.</div><div class="speak">I would reconsider the design when its failure domain, operating cost, or recovery time no longer meets the service's SLOs.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How would you operate Containers safely during a partial outage?</li><li>Which metrics and trade-offs matter most for Containers?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Prefer bounded retries, explicit timeouts, graceful degradation, and a tested rollback path. Preserve enough telemetry to distinguish application, dependency, and infrastructure failures.</div><div class="speak">Measure user-visible latency and errors first, then saturation, capacity, cost, and recovery time. Optimize only after identifying the binding constraint.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Implement graceful shutdown in a Node process and prove that an in-flight request completes before the container exits.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="volumes">
+    <div class="topic-head">
+      <h3>Volumes</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Volumes persist data independently of a container writable layer. Named volumes are managed by Docker; bind mounts expose host paths directly.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Container layers are ephemeral and inefficient for durable, write-heavy state. Volume ownership, backup, restore, and cross-host movement remain operator responsibilities.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>docker volume create pgdata
+docker run --rm -v pgdata:/var/lib/postgresql/data postgres:17-alpine
+docker volume inspect pgdata</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Volumes as syntax or tooling without discussing its runtime behavior.</li><li>Ignoring observability, rollback, resource limits, and failure recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Where does Volumes fit in a production Node.js system?</li><li>What failure mode would make you reconsider your Volumes design?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Volumes should solve a specific operational or engineering constraint. I would state that constraint, describe the mechanism, and then show how I verify the result in production.</div><div class="speak">I would reconsider the design when its failure domain, operating cost, or recovery time no longer meets the service's SLOs.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How would you operate Volumes safely during a partial outage?</li><li>Which metrics and trade-offs matter most for Volumes?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Prefer bounded retries, explicit timeouts, graceful degradation, and a tested rollback path. Preserve enough telemetry to distinguish application, dependency, and infrastructure failures.</div><div class="speak">Measure user-visible latency and errors first, then saturation, capacity, cost, and recovery time. Optimize only after identifying the binding constraint.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Persist a database in a named volume, destroy the container, restore from backup, and verify data integrity.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="networks">
+    <div class="topic-head">
+      <h3>Networks</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>User-defined bridge networks provide service-name DNS and isolated connectivity. Publishing a port exposes it through the host; EXPOSE alone is documentation.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Separating internal dependency traffic from public ingress reduces attack surface and clarifies trust boundaries.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>docker network create backend
+docker run -d --network backend --name redis redis:7-alpine
+docker run --rm --network backend redis:7-alpine redis-cli -h redis ping</pre>
+        <div class="expected"><strong>Expected:</strong><pre>PONG</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Networks as syntax or tooling without discussing its runtime behavior.</li><li>Ignoring observability, rollback, resource limits, and failure recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Where does Networks fit in a production Node.js system?</li><li>What failure mode would make you reconsider your Networks design?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Networks should solve a specific operational or engineering constraint. I would state that constraint, describe the mechanism, and then show how I verify the result in production.</div><div class="speak">I would reconsider the design when its failure domain, operating cost, or recovery time no longer meets the service's SLOs.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How would you operate Networks safely during a partial outage?</li><li>Which metrics and trade-offs matter most for Networks?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Prefer bounded retries, explicit timeouts, graceful degradation, and a tested rollback path. Preserve enough telemetry to distinguish application, dependency, and infrastructure failures.</div><div class="speak">Measure user-visible latency and errors first, then saturation, capacity, cost, and recovery time. Optimize only after identifying the binding constraint.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design public and private networks so only the reverse proxy is host-accessible and the database is private.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="environment-variables">
+    <div class="topic-head">
+      <h3>Environment variables</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Environment variables inject runtime configuration into an otherwise immutable artifact. Validate them at startup and distinguish configuration from secrets.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Build-once/deploy-many avoids environment-specific images. Missing or malformed values should fail fast before the instance receives traffic.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>const required = ['DATABASE_URL', 'PORT'];
+for (const key of required) {
+  if (!process.env[key]) throw new Error('Missing ' + key);
+}
+const port = Number(process.env.PORT);
+if (!Number.isInteger(port)) throw new Error('PORT must be an integer');</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Baking secrets into image layers or committing .env files.</li><li>Logging the full environment or silently accepting invalid defaults.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Where does Environment variables fit in a production Node.js system?</li><li>What failure mode would make you reconsider your Environment variables design?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Environment variables should solve a specific operational or engineering constraint. I would state that constraint, describe the mechanism, and then show how I verify the result in production.</div><div class="speak">I would reconsider the design when its failure domain, operating cost, or recovery time no longer meets the service's SLOs.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How would you operate Environment variables safely during a partial outage?</li><li>Which metrics and trade-offs matter most for Environment variables?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Prefer bounded retries, explicit timeouts, graceful degradation, and a tested rollback path. Preserve enough telemetry to distinguish application, dependency, and infrastructure failures.</div><div class="speak">Measure user-visible latency and errors first, then saturation, capacity, cost, and recovery time. Optimize only after identifying the binding constraint.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Add a typed startup configuration module that redacts secrets and reports actionable validation errors.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="multi-stage-builds">
+    <div class="topic-head">
+      <h3>Multi-stage builds</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Multi-stage builds use separate build and runtime stages so compilers, source maps, test tools, and development dependencies need not ship in the final image.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>A smaller runtime image transfers faster and has less attack surface, while build reproducibility remains in the Dockerfile.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>FROM node:22-alpine AS build
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
+
+FROM node:22-alpine AS runtime
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --omit=dev &amp;&amp; npm cache clean --force
+COPY --from=build /app/dist ./dist
+USER node
+CMD [&quot;node&quot;, &quot;dist/server.js&quot;]</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Multi-stage builds as syntax or tooling without discussing its runtime behavior.</li><li>Ignoring observability, rollback, resource limits, and failure recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Where does Multi-stage builds fit in a production Node.js system?</li><li>What failure mode would make you reconsider your Multi-stage builds design?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Multi-stage builds should solve a specific operational or engineering constraint. I would state that constraint, describe the mechanism, and then show how I verify the result in production.</div><div class="speak">I would reconsider the design when its failure domain, operating cost, or recovery time no longer meets the service's SLOs.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How would you operate Multi-stage builds safely during a partial outage?</li><li>Which metrics and trade-offs matter most for Multi-stage builds?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Prefer bounded retries, explicit timeouts, graceful degradation, and a tested rollback path. Preserve enough telemetry to distinguish application, dependency, and infrastructure failures.</div><div class="speak">Measure user-visible latency and errors first, then saturation, capacity, cost, and recovery time. Optimize only after identifying the binding constraint.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Convert a TypeScript service to a multi-stage build and compare image size and installed packages.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="production-deployment">
+    <div class="topic-head">
+      <h3>Production deployment</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>A production deployment promotes a versioned artifact through environments with readiness checks, controlled rollout, telemetry, and rollback.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Deployments change both code and system behavior. Canary or rolling strategies limit blast radius, but only if health signals represent user-visible correctness.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>release: orders-api@1.4.0 (image digest pinned)
+strategy: 10% canary -&gt; 50% -&gt; 100%
+gates: readiness, p95 latency, 5xx rate, queue lag
+rollback: automatic on SLO breach</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Production deployment as syntax or tooling without discussing its runtime behavior.</li><li>Ignoring observability, rollback, resource limits, and failure recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Where does Production deployment fit in a production Node.js system?</li><li>What failure mode would make you reconsider your Production deployment design?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Production deployment should solve a specific operational or engineering constraint. I would state that constraint, describe the mechanism, and then show how I verify the result in production.</div><div class="speak">I would reconsider the design when its failure domain, operating cost, or recovery time no longer meets the service's SLOs.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How would you operate Production deployment safely during a partial outage?</li><li>Which metrics and trade-offs matter most for Production deployment?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Prefer bounded retries, explicit timeouts, graceful degradation, and a tested rollback path. Preserve enough telemetry to distinguish application, dependency, and infrastructure failures.</div><div class="speak">Measure user-visible latency and errors first, then saturation, capacity, cost, and recovery time. Optimize only after identifying the binding constraint.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Write a deployment runbook with preflight checks, migration ordering, canary gates, rollback, and incident ownership.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="pm2">
+    <div class="topic-head">
+      <h3>PM2</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>PM2 supervises Node.js processes, supports restart policies, logs, graceful reload, and cluster mode. Under a container orchestrator, process supervision is often delegated to the platform.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>On a VM, PM2 can improve availability and use multiple cores. In containers, one process per container usually gives clearer lifecycle and scaling semantics.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>module.exports = {
+  apps: [{
+    name: 'api',
+    script: 'dist/server.js',
+    instances: 'max',
+    exec_mode: 'cluster',
+    kill_timeout: 15000,
+    max_memory_restart: '500M'
+  }]
+};</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining PM2 as syntax or tooling without discussing its runtime behavior.</li><li>Ignoring observability, rollback, resource limits, and failure recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Where does PM2 fit in a production Node.js system?</li><li>What failure mode would make you reconsider your PM2 design?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">PM2 should solve a specific operational or engineering constraint. I would state that constraint, describe the mechanism, and then show how I verify the result in production.</div><div class="speak">I would reconsider the design when its failure domain, operating cost, or recovery time no longer meets the service's SLOs.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How would you operate PM2 safely during a partial outage?</li><li>Which metrics and trade-offs matter most for PM2?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Prefer bounded retries, explicit timeouts, graceful degradation, and a tested rollback path. Preserve enough telemetry to distinguish application, dependency, and infrastructure failures.</div><div class="speak">Measure user-visible latency and errors first, then saturation, capacity, cost, and recovery time. Optimize only after identifying the binding constraint.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Compare PM2 cluster mode on a VM with multiple orchestrated containers, including logs, restarts, scaling, and failure domains.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="reverse-proxy">
+    <div class="topic-head">
+      <h3>Reverse proxy</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>A reverse proxy terminates client connections and forwards requests to upstream services, often adding TLS, routing, buffering, compression, and rate limits.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Central ingress policy simplifies applications, but incorrect timeout and buffering settings can break streaming, WebSockets, uploads, and cancellation.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>client -&gt; reverse proxy -&gt; Node API
+                     -&gt; static assets
+                     -&gt; authentication service
+Forward: Host, X-Request-ID, X-Forwarded-For, X-Forwarded-Proto</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Reverse proxy as syntax or tooling without discussing its runtime behavior.</li><li>Ignoring observability, rollback, resource limits, and failure recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Where does Reverse proxy fit in a production Node.js system?</li><li>What failure mode would make you reconsider your Reverse proxy design?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Reverse proxy should solve a specific operational or engineering constraint. I would state that constraint, describe the mechanism, and then show how I verify the result in production.</div><div class="speak">I would reconsider the design when its failure domain, operating cost, or recovery time no longer meets the service's SLOs.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How would you operate Reverse proxy safely during a partial outage?</li><li>Which metrics and trade-offs matter most for Reverse proxy?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Prefer bounded retries, explicit timeouts, graceful degradation, and a tested rollback path. Preserve enough telemetry to distinguish application, dependency, and infrastructure failures.</div><div class="speak">Measure user-visible latency and errors first, then saturation, capacity, cost, and recovery time. Optimize only after identifying the binding constraint.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Specify proxy timeouts for normal APIs, streaming responses, uploads, and WebSockets, and explain each difference.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="nginx">
+    <div class="topic-head">
+      <h3>Nginx</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Nginx is an event-driven web server and reverse proxy commonly used for TLS termination, static files, routing, caching, and load balancing.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>It handles large numbers of mostly idle connections efficiently and shields application instances, but config must preserve client identity and request semantics.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>upstream api { server api:3000; keepalive 32; }
+server {
+  listen 80;
+  location /api/ {
+    proxy_pass http://api;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Request-ID $request_id;
+  }
+}</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Nginx as syntax or tooling without discussing its runtime behavior.</li><li>Ignoring observability, rollback, resource limits, and failure recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Where does Nginx fit in a production Node.js system?</li><li>What failure mode would make you reconsider your Nginx design?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Nginx should solve a specific operational or engineering constraint. I would state that constraint, describe the mechanism, and then show how I verify the result in production.</div><div class="speak">I would reconsider the design when its failure domain, operating cost, or recovery time no longer meets the service's SLOs.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How would you operate Nginx safely during a partial outage?</li><li>Which metrics and trade-offs matter most for Nginx?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Prefer bounded retries, explicit timeouts, graceful degradation, and a tested rollback path. Preserve enough telemetry to distinguish application, dependency, and infrastructure failures.</div><div class="speak">Measure user-visible latency and errors first, then saturation, capacity, cost, and recovery time. Optimize only after identifying the binding constraint.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Configure Nginx for a Node API with upstream keep-alive, request IDs, body limits, and a health endpoint.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="https">
+    <div class="topic-head">
+      <h3>HTTPS</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>HTTPS is HTTP over TLS, providing server authentication, confidentiality, and integrity. Certificates bind names to public keys and require renewal.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>TLS prevents passive reading and active modification in transit. Correct termination, redirect, HSTS, modern protocols, and internal trust boundaries all matter.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>curl -I https://api.example.com/health
+openssl s_client -connect api.example.com:443 -servername api.example.com &lt;/dev/null</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Inspect certificate chain, negotiated protocol, and security headers.</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining HTTPS as syntax or tooling without discussing its runtime behavior.</li><li>Ignoring observability, rollback, resource limits, and failure recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Where does HTTPS fit in a production Node.js system?</li><li>What failure mode would make you reconsider your HTTPS design?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">HTTPS should solve a specific operational or engineering constraint. I would state that constraint, describe the mechanism, and then show how I verify the result in production.</div><div class="speak">I would reconsider the design when its failure domain, operating cost, or recovery time no longer meets the service's SLOs.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How would you operate HTTPS safely during a partial outage?</li><li>Which metrics and trade-offs matter most for HTTPS?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Prefer bounded retries, explicit timeouts, graceful degradation, and a tested rollback path. Preserve enough telemetry to distinguish application, dependency, and infrastructure failures.</div><div class="speak">Measure user-visible latency and errors first, then saturation, capacity, cost, and recovery time. Optimize only after identifying the binding constraint.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a certificate renewal and expiry-alert plan; explain TLS termination at the edge versus end-to-end TLS.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="ci-cd">
+    <div class="topic-head">
+      <h3>CI/CD</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Continuous integration validates each change; continuous delivery produces a releasable artifact; continuous deployment promotes passing changes automatically.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Automated, repeatable gates shorten feedback and reduce manual drift. Security scans and tests help, but deployment safety also needs staged rollout and production signals.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>on commit:
+  lint -&gt; unit -&gt; integration -&gt; build image -&gt; scan -&gt; sign
+on approved release:
+  deploy canary -&gt; smoke test -&gt; observe SLO -&gt; promote/rollback</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining CI/CD as syntax or tooling without discussing its runtime behavior.</li><li>Ignoring observability, rollback, resource limits, and failure recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Where does CI/CD fit in a production Node.js system?</li><li>What failure mode would make you reconsider your CI/CD design?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">CI/CD should solve a specific operational or engineering constraint. I would state that constraint, describe the mechanism, and then show how I verify the result in production.</div><div class="speak">I would reconsider the design when its failure domain, operating cost, or recovery time no longer meets the service's SLOs.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How would you operate CI/CD safely during a partial outage?</li><li>Which metrics and trade-offs matter most for CI/CD?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Prefer bounded retries, explicit timeouts, graceful degradation, and a tested rollback path. Preserve enough telemetry to distinguish application, dependency, and infrastructure failures.</div><div class="speak">Measure user-visible latency and errors first, then saturation, capacity, cost, and recovery time. Optimize only after identifying the binding constraint.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a pipeline that builds once, pins the digest, signs provenance, gates database migrations, and rolls back safely.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="basic-cloud-architecture">
+    <div class="topic-head">
+      <h3>Basic cloud architecture</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>A typical cloud service places DNS and CDN/WAF before a load balancer, runs stateless application instances across failure zones, and uses managed data, queue, cache, and object storage services.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Managed primitives reduce undifferentiated operations, while multi-zone placement and asynchronous boundaries improve resilience. Every dependency still needs explicit timeout, retry, capacity, and cost design.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>DNS -&gt; CDN/WAF -&gt; Load Balancer -&gt; Node instances (multi-AZ)
+                                  |-&gt; Redis
+                                  |-&gt; Queue -&gt; workers
+                                  |-&gt; Managed Postgres
+                                  |-&gt; Object storage
+Telemetry -&gt; logs, metrics, traces, alerts</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Basic cloud architecture as syntax or tooling without discussing its runtime behavior.</li><li>Ignoring observability, rollback, resource limits, and failure recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Where does Basic cloud architecture fit in a production Node.js system?</li><li>What failure mode would make you reconsider your Basic cloud architecture design?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Basic cloud architecture should solve a specific operational or engineering constraint. I would state that constraint, describe the mechanism, and then show how I verify the result in production.</div><div class="speak">I would reconsider the design when its failure domain, operating cost, or recovery time no longer meets the service's SLOs.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How would you operate Basic cloud architecture safely during a partial outage?</li><li>Which metrics and trade-offs matter most for Basic cloud architecture?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Prefer bounded retries, explicit timeouts, graceful degradation, and a tested rollback path. Preserve enough telemetry to distinguish application, dependency, and infrastructure failures.</div><div class="speak">Measure user-visible latency and errors first, then saturation, capacity, cost, and recovery time. Optimize only after identifying the binding constraint.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Draw a cloud architecture for an order API and identify trust boundaries, failure domains, data ownership, and scaling bottlenecks.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+          
+          
+          <div class="phase-nav"><a class="btn btn-ghost" href="12-performance.html">← Phase 12 · Performance</a><a class="btn btn-primary" href="14-testing.html">Phase 14 · Testing →</a></div>
+        </div>
+      </div>
+      <footer class="fine">Phase 13 · Node.js / TypeScript interview preparation</footer>
+    </main>
+  </div>
+  <script src="../assets/prep.js"></script>
+</body>
+</html>

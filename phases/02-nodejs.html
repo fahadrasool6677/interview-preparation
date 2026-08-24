@@ -1,0 +1,1239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Node.js Deep Dive — Node.js Interview Prep</title>
+  <link rel="stylesheet" href="../assets/prep.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" />
+</head>
+<body data-page="phase" data-phase="02">
+  <div class="app">
+    <nav class="sidebar">
+      <h1>Node.js Interview Prep</h1>
+      <p class="tag">5-year · Backend / Full-stack · Senior track</p>
+      <a class="nav-link" href="../nodejs-interview-preparation.html">← Hub</a>
+      <div class="nav-group">Phases</div>
+      <div id="phase-links">
+        <a class="nav-link" href="01-javascript.html">01 JavaScript</a>
+        <a class="nav-link" href="02-nodejs.html">02 Node.js</a>
+        <a class="nav-link" href="03-typescript.html">03 TypeScript</a>
+        <a class="nav-link" href="04-express.html">04 Express</a>
+        <a class="nav-link" href="05-rest.html">05 REST APIs</a>
+        <a class="nav-link" href="06-databases.html">06 Databases</a>
+        <a class="nav-link" href="07-redis.html">07 Redis</a>
+        <a class="nav-link" href="08-auth-security.html">08 Auth &amp; Security</a>
+        <a class="nav-link" href="09-microservices.html">09 Microservices</a>
+        <a class="nav-link" href="10-queues.html">10 Queues</a>
+        <a class="nav-link" href="11-system-design.html">11 System Design</a>
+        <a class="nav-link" href="12-performance.html">12 Performance</a>
+        <a class="nav-link" href="13-docker.html">13 Docker &amp; Deploy</a>
+        <a class="nav-link" href="14-testing.html">14 Testing</a>
+        <a class="nav-link" href="15-coding.html">15 Coding</a>
+        <a class="nav-link" href="16-projects.html">16 Projects</a>
+      </div>
+      <div class="meta">Mark topics reviewed as you go. Progress is stored in this browser.</div>
+    </nav>
+    <main>
+      <p class="kicker">Phase 02 · Runtime and operations</p>
+      <header class="hero">
+        <h2>Node.js Deep Dive</h2>
+        <p class="lead">Reason from V8, libuv, and the event loop to concurrency, shutdown, profiling, and reliable high-throughput services.</p>
+      </header>
+      <div class="note">Interview shape: claim → mechanism → production example → failure → trade-off. Reveal answers only after you attempt them aloud.</div>
+      <div class="phase-layout">
+        <aside class="toc">
+          <strong>On this page</strong>
+          <div class="toc-list"></div>
+        </aside>
+        <div class="topics">
+          
+  <article class="topic" id="architecture">
+    <div class="topic-head">
+      <h3>Node.js architecture</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Node combines V8, Node core bindings, libuv, and an event-driven JavaScript API. JavaScript normally runs on one thread while the OS and libuv perform concurrent work.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>The architecture keeps coordination cheap for I/O-heavy services while delegating expensive or blocking operations to kernels, pools, workers, or child processes.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>const { versions } = process;
+console.log(Boolean(versions.v8), process.release.name);</pre>
+        <div class="expected"><strong>Expected:</strong><pre>true node</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Node.js architecture only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain Node.js architecture and give a production example.</li><li>What bug would reveal a weak understanding of Node.js architecture?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Node.js architecture is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain Node.js architecture in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates Node.js architecture, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="v8">
+    <div class="topic-head">
+      <h3>V8</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>V8 parses and compiles JavaScript, optimizes hot code, manages the heap, and performs garbage collection. Shapes and stable types can affect optimization.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Speculative optimization makes dynamic JavaScript fast, but deoptimization and GC pressure make allocation patterns and profiling evidence important.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>console.log(typeof process.memoryUsage().heapUsed === &quot;number&quot;);</pre>
+        <div class="expected"><strong>Expected:</strong><pre>true</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining V8 only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain V8 and give a production example.</li><li>What bug would reveal a weak understanding of V8?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">V8 is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain V8 in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates V8, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="libuv">
+    <div class="topic-head">
+      <h3>libuv</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>libuv provides the event loop, cross-platform async I/O, a thread pool for selected APIs, timers, and process/signal abstractions.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Network I/O usually uses OS readiness mechanisms; file, DNS, crypto, and compression work may use the finite pool and contend.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>const fs = require(&quot;fs&quot;);
+fs.stat(__filename, () =&gt; console.log(&quot;fs callback&quot;));
+console.log(&quot;submitted&quot;);</pre>
+        <div class="expected"><strong>Expected:</strong><pre>submitted
+fs callback</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining libuv only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain libuv and give a production example.</li><li>What bug would reveal a weak understanding of libuv?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">libuv is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain libuv in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates libuv, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="event-loop">
+    <div class="topic-head">
+      <h3>Node.js event loop</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Node advances through timer, poll, check, and close phases, with microtasks and <code>process.nextTick</code> handled at defined boundaries.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Phase ordering enables efficient readiness polling; excessive callbacks, nextTicks, or synchronous work inflate latency for every connection.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>setImmediate(() =&gt; console.log(&quot;check&quot;));
+setTimeout(() =&gt; console.log(&quot;timer&quot;), 0);
+process.nextTick(() =&gt; console.log(&quot;nextTick&quot;));</pre>
+        <div class="expected"><strong>Expected:</strong><pre>nextTick
+(timer/check ordering can vary by context)</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Node.js event loop only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain Node.js event loop and give a production example.</li><li>What bug would reveal a weak understanding of Node.js event loop?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Node.js event loop is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain Node.js event loop in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates Node.js event loop, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="worker-threads">
+    <div class="topic-head">
+      <h3>Worker threads</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Workers run JavaScript in separate V8 isolates and threads. They communicate through messages, transferred buffers, or carefully synchronized shared memory.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>They provide CPU parallelism without a separate process, but startup, serialization, memory, and coordination costs require a bounded pool.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>const { Worker, isMainThread, parentPort } = require(&quot;worker_threads&quot;);
+if (isMainThread) new Worker(__filename).on(&quot;message&quot;, console.log);
+else parentPort.postMessage(6 * 7);</pre>
+        <div class="expected"><strong>Expected:</strong><pre>42</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Worker threads only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain Worker threads and give a production example.</li><li>What bug would reveal a weak understanding of Worker threads?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Worker threads is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain Worker threads in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates Worker threads, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="cluster">
+    <div class="topic-head">
+      <h3>Cluster</h3>
+      <span class="badge med">Medium</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Cluster starts multiple Node processes that can share a server port, typically one per CPU allocation.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Separate heaps improve isolation and parallelism, but orchestration platforms often make explicit multi-process containers or replicas clearer.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>const cluster = require(&quot;cluster&quot;);
+console.log(cluster.isPrimary ? &quot;primary&quot; : &quot;worker&quot;);</pre>
+        <div class="expected"><strong>Expected:</strong><pre>primary</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Cluster only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain Cluster and give a production example.</li><li>What bug would reveal a weak understanding of Cluster?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Cluster is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain Cluster in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates Cluster, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="streams">
+    <div class="topic-head">
+      <h3>Streams</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Streams process data incrementally through readable, writable, transform, and duplex interfaces. <code>pipeline</code> coordinates errors and cleanup.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Backpressure bounds buffering when producers outpace consumers, protecting memory during uploads, exports, and proxying.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>const { Readable, Transform } = require(&quot;stream&quot;);
+Readable.from([&quot;pay&quot;, &quot;ment&quot;]).pipe(new Transform({ transform(c,e,cb){ cb(null, c.toString().toUpperCase()); } })).on(&quot;data&quot;, c =&gt; process.stdout.write(c));</pre>
+        <div class="expected"><strong>Expected:</strong><pre>PAYMENT</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Streams only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain Streams and give a production example.</li><li>What bug would reveal a weak understanding of Streams?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Streams is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain Streams in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates Streams, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="buffers">
+    <div class="topic-head">
+      <h3>Buffers</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Buffers represent byte sequences outside normal string semantics and underpin sockets, files, crypto, and binary protocols.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Binary I/O avoids costly text conversions, but slicing may share memory and unsafe allocation can expose stale bytes.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>const b = Buffer.from(&quot;paid&quot;);
+console.log(b.length, b.toString(&quot;hex&quot;));</pre>
+        <div class="expected"><strong>Expected:</strong><pre>4 70616964</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Buffers only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain Buffers and give a production example.</li><li>What bug would reveal a weak understanding of Buffers?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Buffers is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain Buffers in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates Buffers, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="file-system">
+    <div class="topic-head">
+      <h3>File system</h3>
+      <span class="badge med">Medium</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Node offers callback, Promise, stream, and synchronous filesystem APIs. Correct code handles partial assumptions, atomicity, permissions, and descriptor cleanup.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Async APIs avoid blocking the event loop, though many operations use the shared libuv pool and local filesystems differ from network storage.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>const fs = require(&quot;fs/promises&quot;);
+fs.stat(__filename).then(s =&gt; console.log(s.isFile()));</pre>
+        <div class="expected"><strong>Expected:</strong><pre>true</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining File system only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain File system and give a production example.</li><li>What bug would reveal a weak understanding of File system?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">File system is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain File system in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates File system, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="eventemitter">
+    <div class="topic-head">
+      <h3>EventEmitter</h3>
+      <span class="badge med">Medium</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>EventEmitter provides synchronous in-order local publish/subscribe. Listener exceptions propagate synchronously and <code>error</code> has special semantics.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Synchronous delivery is predictable and cheap, but it is not a durable message bus and leaked listeners retain objects.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>const { EventEmitter } = require(&quot;events&quot;);
+const bus = new EventEmitter();
+bus.once(&quot;paid&quot;, id =&gt; console.log(id));
+bus.emit(&quot;paid&quot;, &quot;o1&quot;);</pre>
+        <div class="expected"><strong>Expected:</strong><pre>o1</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining EventEmitter only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain EventEmitter and give a production example.</li><li>What bug would reveal a weak understanding of EventEmitter?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">EventEmitter is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain EventEmitter in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates EventEmitter, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="child-processes">
+    <div class="topic-head">
+      <h3>Child processes</h3>
+      <span class="badge med">Medium</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Child processes run external commands or isolated Node programs via spawn, exec, execFile, or fork.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>OS process isolation supports binaries and hard failure boundaries; shell injection, buffering, cancellation, and zombie cleanup must be controlled.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>const { execFile } = require(&quot;child_process&quot;);
+execFile(process.execPath, [&quot;-e&quot;, &quot;console.log('child')&quot;], (e, out) =&gt; process.stdout.write(out));</pre>
+        <div class="expected"><strong>Expected:</strong><pre>child</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Child processes only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain Child processes and give a production example.</li><li>What bug would reveal a weak understanding of Child processes?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Child processes is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain Child processes in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates Child processes, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="process-lifecycle">
+    <div class="topic-head">
+      <h3>Process lifecycle</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Startup validates configuration and dependencies; steady state serves work; shutdown stops admission, drains, closes resources, and exits with meaningful status.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Explicit lifecycle ownership prevents half-ready instances, hanging deploys, and lost in-flight payments.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>process.on(&quot;beforeExit&quot;, code =&gt; console.log(&quot;beforeExit&quot;, code));
+console.log(&quot;work&quot;);</pre>
+        <div class="expected"><strong>Expected:</strong><pre>work
+beforeExit 0</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Process lifecycle only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain Process lifecycle and give a production example.</li><li>What bug would reveal a weak understanding of Process lifecycle?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Process lifecycle is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain Process lifecycle in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates Process lifecycle, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="environment-variables">
+    <div class="topic-head">
+      <h3>Environment variables</h3>
+      <span class="badge med">Medium</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Environment variables are string inputs to configuration, not validated configuration themselves. Parse once into a typed immutable config object.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Fail-fast validation moves production surprises to startup and avoids inconsistent parsing throughout the codebase.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>process.env.PAYMENT_TIMEOUT_MS = &quot;1500&quot;;
+const timeout = Number(process.env.PAYMENT_TIMEOUT_MS);
+console.log(timeout);</pre>
+        <div class="expected"><strong>Expected:</strong><pre>1500</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Environment variables only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain Environment variables and give a production example.</li><li>What bug would reveal a weak understanding of Environment variables?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Environment variables is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain Environment variables in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates Environment variables, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="signals">
+    <div class="topic-head">
+      <h3>Signals</h3>
+      <span class="badge med">Medium</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Signals such as SIGTERM notify a process of external lifecycle events. Handlers change default termination behavior.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Supervisors use signals for deployment and shutdown; handlers must be idempotent and still enforce a deadline.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>console.log([&quot;SIGTERM&quot;, &quot;SIGINT&quot;].every(s =&gt; typeof s === &quot;string&quot;));</pre>
+        <div class="expected"><strong>Expected:</strong><pre>true</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Signals only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain Signals and give a production example.</li><li>What bug would reveal a weak understanding of Signals?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Signals is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain Signals in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates Signals, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="graceful-shutdown">
+    <div class="topic-head">
+      <h3>Graceful shutdown</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Mark unready, stop accepting work, drain requests and consumers, close dependencies, then force exit after a bounded deadline.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>A staged shutdown preserves availability and at-least-once correctness while preventing indefinitely stuck deployments.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>let accepting = true;
+process.once(&quot;SIGTERM&quot;, () =&gt; { accepting = false; console.log(&quot;draining&quot;); });
+process.emit(&quot;SIGTERM&quot;);</pre>
+        <div class="expected"><strong>Expected:</strong><pre>draining</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Graceful shutdown only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain Graceful shutdown and give a production example.</li><li>What bug would reveal a weak understanding of Graceful shutdown?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Graceful shutdown is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain Graceful shutdown in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates Graceful shutdown, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="cpu-vs-io">
+    <div class="topic-head">
+      <h3>CPU-bound vs I/O-bound</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>I/O-bound work spends time waiting and fits event-driven concurrency. CPU-bound work occupies the JavaScript thread and delays unrelated requests.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Workload shape, not language fashion, determines fit; CPU work belongs in workers, processes, services, or optimized native systems.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>const start = Date.now();
+while (Date.now() - start &lt; 10) {}
+setTimeout(() =&gt; console.log(&quot;I/O callback delayed&quot;), 0);</pre>
+        <div class="expected"><strong>Expected:</strong><pre>I/O callback delayed</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining CPU-bound vs I/O-bound only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain CPU-bound vs I/O-bound and give a production example.</li><li>What bug would reveal a weak understanding of CPU-bound vs I/O-bound?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">CPU-bound vs I/O-bound is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain CPU-bound vs I/O-bound in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates CPU-bound vs I/O-bound, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="blocking-nonblocking">
+    <div class="topic-head">
+      <h3>Blocking vs non-blocking</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Blocking means the event-loop thread cannot progress; even an asynchronous API can cause contention if its callback performs long synchronous work.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Tail latency depends on keeping each turn short. Non-blocking designs overlap waits, but need bounded concurrency and backpressure.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>const fs = require(&quot;fs&quot;);
+fs.readFile(__filename, () =&gt; console.log(&quot;async done&quot;));
+console.log(&quot;not blocked&quot;);</pre>
+        <div class="expected"><strong>Expected:</strong><pre>not blocked
+async done</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Blocking vs non-blocking only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain Blocking vs non-blocking and give a production example.</li><li>What bug would reveal a weak understanding of Blocking vs non-blocking?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Blocking vs non-blocking is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain Blocking vs non-blocking in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates Blocking vs non-blocking, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="memory-leaks">
+    <div class="topic-head">
+      <h3>Memory leaks</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Leaks are reachable objects no longer useful: unbounded caches, listeners, timers, closures, request contexts, or native buffers.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>GC only collects unreachable memory. Heap snapshots, allocation profiles, and retention paths identify ownership mistakes.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>const cache = new Map();
+cache.set(&quot;o1&quot;, Buffer.alloc(1024));
+cache.delete(&quot;o1&quot;);
+console.log(cache.size);</pre>
+        <div class="expected"><strong>Expected:</strong><pre>0</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Memory leaks only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain Memory leaks and give a production example.</li><li>What bug would reveal a weak understanding of Memory leaks?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Memory leaks is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain Memory leaks in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates Memory leaks, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="performance">
+    <div class="topic-head">
+      <h3>Node.js performance</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Performance work starts with service-level objectives and workload evidence: throughput, p95/p99 latency, event-loop lag, CPU, heap, GC, and downstream time.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Optimization without measurement moves bottlenecks or harms clarity; load tests must model realistic payloads, concurrency, and dependencies.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>const { performance } = require(&quot;perf_hooks&quot;);
+const start = performance.now();
+JSON.stringify({ id: &quot;o1&quot; });
+console.log(performance.now() &gt;= start);</pre>
+        <div class="expected"><strong>Expected:</strong><pre>true</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Node.js performance only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain Node.js performance and give a production example.</li><li>What bug would reveal a weak understanding of Node.js performance?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Node.js performance is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain Node.js performance in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates Node.js performance, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="profiling">
+    <div class="topic-head">
+      <h3>Profiling</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>CPU profiles find hot frames; heap snapshots find retainers; allocation profiles find churn; event-loop and async traces expose stalls.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Sampling and runtime telemetry replace guesses with evidence, but profiling overhead and production data sensitivity must be managed.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>const { monitorEventLoopDelay } = require(&quot;perf_hooks&quot;);
+const h = monitorEventLoopDelay(); h.enable();
+setImmediate(() =&gt; { h.disable(); console.log(typeof h.mean === &quot;number&quot;); });</pre>
+        <div class="expected"><strong>Expected:</strong><pre>true</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Profiling only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain Profiling and give a production example.</li><li>What bug would reveal a weak understanding of Profiling?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Profiling is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain Profiling in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates Profiling, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="logging">
+    <div class="topic-head">
+      <h3>Logging</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Use structured, leveled logs with request, trace, order, and payment correlation IDs. Redact secrets and avoid duplicate logging at every layer.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Machine-readable events support search and incident reconstruction; cardinality, volume, and synchronous transports affect cost and latency.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>console.log(JSON.stringify({ level: &quot;info&quot;, event: &quot;payment_authorized&quot;, orderId: &quot;o1&quot; }));</pre>
+        <div class="expected"><strong>Expected:</strong><pre>{&quot;level&quot;:&quot;info&quot;,&quot;event&quot;:&quot;payment_authorized&quot;,&quot;orderId&quot;:&quot;o1&quot;}</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Logging only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain Logging and give a production example.</li><li>What bug would reveal a weak understanding of Logging?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Logging is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain Logging in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates Logging, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="error-handling">
+    <div class="topic-head">
+      <h3>Node.js error handling</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Handle operational errors at boundaries, preserve causes, classify retryability, and let programmer corruption trigger supervised restart after safe logging.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Different failures need different policy; swallowing or globally continuing after an unknown exception risks invalid process state.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>process.on(&quot;uncaughtExceptionMonitor&quot;, e =&gt; console.log(e.message));
+try { throw new Error(&quot;declined&quot;); } catch (e) { console.log(e.message); }</pre>
+        <div class="expected"><strong>Expected:</strong><pre>declined</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Node.js error handling only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain Node.js error handling and give a production example.</li><li>What bug would reveal a weak understanding of Node.js error handling?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Node.js error handling is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain Node.js error handling in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates Node.js error handling, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="async-error-propagation">
+    <div class="topic-head">
+      <h3>Async error propagation</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Promise rejection travels through awaited or returned chains; callback errors use error-first arguments; stream errors require pipeline or explicit listeners.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Every async boundary changes propagation rules, so ownership and returning/awaiting Promises are necessary to avoid unhandled work.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>async function pay() { throw new Error(&quot;declined&quot;); }
+pay().catch(e =&gt; console.log(e.message));</pre>
+        <div class="expected"><strong>Expected:</strong><pre>declined</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Async error propagation only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain Async error propagation and give a production example.</li><li>What bug would reveal a weak understanding of Async error propagation?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Async error propagation is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain Async error propagation in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates Async error propagation, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="10k-concurrent">
+    <div class="topic-head">
+      <h3>How Node handles 10k concurrent requests</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Node does not create 10k JavaScript threads. It keeps connection state, registers readiness with the OS, and runs short callbacks as sockets become ready.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>This scales when requests mostly wait on I/O and concurrency is bounded downstream; memory per connection, keep-alive, pool limits, and backpressure become constraints.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>console.log(&quot;How Node handles 10k concurrent requests: demonstrated&quot;);</pre>
+        <div class="expected"><strong>Expected:</strong><pre>How Node handles 10k concurrent requests: demonstrated</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining How Node handles 10k concurrent requests only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain How Node handles 10k concurrent requests and give a production example.</li><li>What bug would reveal a weak understanding of How Node handles 10k concurrent requests?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">How Node handles 10k concurrent requests is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain How Node handles 10k concurrent requests in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I would budget connection memory, cap body size and admission, align database pools, monitor event-loop lag and p99, use timeouts, and load test realistic keep-alive traffic. Ten thousand open sockets is not ten thousand simultaneous database queries.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates How Node handles 10k concurrent requests, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="http-arrival">
+    <div class="topic-head">
+      <h3>What happens when an HTTP request arrives</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>The kernel accepts bytes, Node's HTTP parser builds request events, middleware or handlers execute, dependencies perform async work, and the response is serialized back to the socket.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Each boundary adds queues, limits, cancellation, and failure modes; tracing should follow the request from listener through database and payment provider.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>console.log(&quot;What happens when an HTTP request arrives: demonstrated&quot;);</pre>
+        <div class="expected"><strong>Expected:</strong><pre>What happens when an HTTP request arrives: demonstrated</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining What happens when an HTTP request arrives only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain What happens when an HTTP request arrives and give a production example.</li><li>What bug would reveal a weak understanding of What happens when an HTTP request arrives?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">What happens when an HTTP request arrives is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain What happens when an HTTP request arrives in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates What happens when an HTTP request arrives, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="io-heavy-fit">
+    <div class="topic-head">
+      <h3>Why Node is good for I/O-heavy workloads</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>A small number of threads can coordinate many waiting operations because callbacks run only when progress is possible.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Low scheduling overhead and a unified async model fit APIs, proxies, and real-time gateways, provided callbacks remain short.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>console.log(&quot;Why Node is good for I/O-heavy workloads: demonstrated&quot;);</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Why Node is good for I/O-heavy workloads: demonstrated</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Why Node is good for I/O-heavy workloads only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain Why Node is good for I/O-heavy workloads and give a production example.</li><li>What bug would reveal a weak understanding of Why Node is good for I/O-heavy workloads?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Why Node is good for I/O-heavy workloads is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain Why Node is good for I/O-heavy workloads in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates Why Node is good for I/O-heavy workloads, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="node-problematic">
+    <div class="topic-head">
+      <h3>When Node becomes problematic</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Node is a poor default when workloads require sustained CPU, strict pause guarantees, huge per-request memory, blocking native dependencies, or unsuitable ecosystem guarantees.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>The event-loop architecture amplifies long synchronous work; acknowledging workload mismatch is better than compensating with accidental complexity.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>console.log(&quot;When Node becomes problematic: demonstrated&quot;);</pre>
+        <div class="expected"><strong>Expected:</strong><pre>When Node becomes problematic: demonstrated</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining When Node becomes problematic only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain When Node becomes problematic and give a production example.</li><li>What bug would reveal a weak understanding of When Node becomes problematic?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">When Node becomes problematic is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain When Node becomes problematic in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates When Node becomes problematic, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="cpu-intensive">
+    <div class="topic-head">
+      <h3>Handling CPU-intensive operations</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Partition work, bound a worker-thread pool, transfer rather than copy large buffers, support cancellation, and consider processes or a dedicated service for isolation.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Parallelism restores event-loop responsiveness, but queues must reject or shed load before worker backlog consumes memory and violates deadlines.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>console.log(&quot;Handling CPU-intensive operations: demonstrated&quot;);</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Handling CPU-intensive operations: demonstrated</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Handling CPU-intensive operations only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain Handling CPU-intensive operations and give a production example.</li><li>What bug would reveal a weak understanding of Handling CPU-intensive operations?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Handling CPU-intensive operations is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain Handling CPU-intensive operations in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates Handling CPU-intensive operations, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="worker-internals">
+    <div class="topic-head">
+      <h3>How worker threads work</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Each worker has its own isolate, heap, module graph, and event loop. Messages use structured clone unless data is transferred or shared.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Isolation avoids ordinary data races; SharedArrayBuffer and Atomics trade copy cost for synchronization complexity and should be narrowly used.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>console.log(&quot;How worker threads work: demonstrated&quot;);</pre>
+        <div class="expected"><strong>Expected:</strong><pre>How worker threads work: demonstrated</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining How worker threads work only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain How worker threads work and give a production example.</li><li>What bug would reveal a weak understanding of How worker threads work?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">How worker threads work is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain How worker threads work in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates How worker threads work, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="event-loop-blocking">
+    <div class="topic-head">
+      <h3>Identifying event-loop blocking</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Correlate event-loop delay/utilization and p99 latency with CPU profiles, diagnostics, traces, and slow synchronous operations under representative load.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Lag is a symptom, not a root cause. Profiles reveal whether JSON, regex, crypto, logging, GC, or application loops consume turns.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>console.log(&quot;Identifying event-loop blocking: demonstrated&quot;);</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Identifying event-loop blocking: demonstrated</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Identifying event-loop blocking only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain Identifying event-loop blocking and give a production example.</li><li>What bug would reveal a weak understanding of Identifying event-loop blocking?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Identifying event-loop blocking is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain Identifying event-loop blocking in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates Identifying event-loop blocking, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+          
+          
+          <div class="phase-nav"><a class="btn btn-ghost" href="01-javascript.html">← JavaScript Deep Revision</a><a class="btn btn-primary" href="03-typescript.html">TypeScript Mastery →</a></div>
+        </div>
+      </div>
+      <footer class="fine">Phase 02 · Node.js / TypeScript interview preparation</footer>
+    </main>
+  </div>
+  <script src="../assets/prep.js"></script>
+</body>
+</html>

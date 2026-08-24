@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Performance &amp; Production Debugging — Node.js Interview Prep</title>
+  <link rel="stylesheet" href="../assets/prep.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" />
+</head>
+<body data-page="phase" data-phase="12">
+  <div class="app">
+    <nav class="sidebar">
+      <h1>Node.js Interview Prep</h1>
+      <p class="tag">5-year · Backend / Full-stack · Senior track</p>
+      <a class="nav-link" href="../nodejs-interview-preparation.html">← Hub</a>
+      <div class="nav-group">Phases</div>
+      <div id="phase-links">
+        <a class="nav-link" href="01-javascript.html">01 JavaScript</a>
+        <a class="nav-link" href="02-nodejs.html">02 Node.js</a>
+        <a class="nav-link" href="03-typescript.html">03 TypeScript</a>
+        <a class="nav-link" href="04-express.html">04 Express</a>
+        <a class="nav-link" href="05-rest.html">05 REST APIs</a>
+        <a class="nav-link" href="06-databases.html">06 Databases</a>
+        <a class="nav-link" href="07-redis.html">07 Redis</a>
+        <a class="nav-link" href="08-auth-security.html">08 Auth &amp; Security</a>
+        <a class="nav-link" href="09-microservices.html">09 Microservices</a>
+        <a class="nav-link" href="10-queues.html">10 Queues</a>
+        <a class="nav-link" href="11-system-design.html">11 System Design</a>
+        <a class="nav-link" href="12-performance.html">12 Performance</a>
+        <a class="nav-link" href="13-docker.html">13 Docker &amp; Deploy</a>
+        <a class="nav-link" href="14-testing.html">14 Testing</a>
+        <a class="nav-link" href="15-coding.html">15 Coding</a>
+        <a class="nav-link" href="16-projects.html">16 Projects</a>
+      </div>
+      <div class="meta">Mark topics reviewed as you go. Progress is stored in this browser.</div>
+    </nav>
+    <main>
+      <p class="kicker">Phase 12 · Diagnosis and incidents</p>
+      <header class="hero">
+        <h2>Performance &amp; Production Debugging</h2>
+        <p class="lead">Debug from evidence: quantify the regression, locate queueing and saturation, mitigate safely, and verify recovery against user-facing objectives.</p>
+      </header>
+      <div class="note">Interview shape: claim → mechanism → production example → failure → trade-off. Reveal answers only after you attempt them aloud.</div>
+      <div class="phase-layout">
+        <aside class="toc">
+          <strong>On this page</strong>
+          <div class="toc-list"></div>
+        </aside>
+        <div class="topics">
+          
+  <article class="topic" id="slow-api">
+    <div class="topic-head">
+      <h3>Slow API</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Slow APIs require decomposition of queueing, application, dependency, database, and network time by percentile.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Latency is a distribution; p50 can look healthy while p99 violates the SLO.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Compare p50/p95/p99 traces; separate 2s queue wait from 40ms CPU and 300ms database.</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating slow api as a product choice without measuring its operational cost.</li><li>Explaining only the happy path; senior answers include overload, partial failure, and recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain slow api and when you would use it.</li><li>What production signal tells you this design is failing?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak"><strong>Model answer:</strong> Slow APIs require decomposition of queueing, application, dependency, database, and network time by percentile. I would define the SLO, instrument the critical path, and validate the decision under realistic load before standardizing it.</div><div class="speak"><strong>Failure signal:</strong> Watch latency percentiles, error/timeout rate, saturation, backlog, and business-level correctness—not averages alone.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How does this behave during a partial outage or retry surge?</li><li>Which trade-off would make you reverse this decision?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Bound concurrency and retries, use deadlines and backpressure, preserve idempotency, and make degradation explicit. Recovery must be tested, not assumed.</div><div class="speak">Reverse the choice when measured complexity, tail latency, consistency risk, or on-call burden exceeds the isolation or scaling benefit.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Use a trace waterfall to form and test three hypotheses; define an SLO and rollback trigger.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="high-cpu">
+    <div class="topic-head">
+      <h3>High CPU</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>High CPU can come from useful load, hot loops, serialization, regex, crypto, GC, or excessive context switching.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>CPU saturation increases queueing nonlinearly; adding instances masks but does not identify the cause.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Capture an on-CPU profile during the event; compare flamegraph and requests/sec to a healthy baseline.</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating high cpu as a product choice without measuring its operational cost.</li><li>Explaining only the happy path; senior answers include overload, partial failure, and recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain high cpu and when you would use it.</li><li>What production signal tells you this design is failing?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak"><strong>Model answer:</strong> High CPU can come from useful load, hot loops, serialization, regex, crypto, GC, or excessive context switching. I would define the SLO, instrument the critical path, and validate the decision under realistic load before standardizing it.</div><div class="speak"><strong>Failure signal:</strong> Watch latency percentiles, error/timeout rate, saturation, backlog, and business-level correctness—not averages alone.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How does this behave during a partial outage or retry surge?</li><li>Which trade-off would make you reverse this decision?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Bound concurrency and retries, use deadlines and backpressure, preserve idempotency, and make degradation explicit. Recovery must be tested, not assumed.</div><div class="speak">Reverse the choice when measured complexity, tail latency, consistency risk, or on-call burden exceeds the isolation or scaling benefit.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Sketch a production-ready use of high cpu. Include SLOs, telemetry, one failure injection, and a rollback or recovery path.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="high-memory">
+    <div class="topic-head">
+      <h3>High memory</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>High memory may be live working set, buffers, cache, native allocations, fragmentation, or retained garbage.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>RSS, heap used, external memory, and GC behavior answer different questions.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Track process.memoryUsage(), heap snapshots, allocation profiles, GC pause, and container working set.</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating high memory as a product choice without measuring its operational cost.</li><li>Explaining only the happy path; senior answers include overload, partial failure, and recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain high memory and when you would use it.</li><li>What production signal tells you this design is failing?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak"><strong>Model answer:</strong> High memory may be live working set, buffers, cache, native allocations, fragmentation, or retained garbage. I would define the SLO, instrument the critical path, and validate the decision under realistic load before standardizing it.</div><div class="speak"><strong>Failure signal:</strong> Watch latency percentiles, error/timeout rate, saturation, backlog, and business-level correctness—not averages alone.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How does this behave during a partial outage or retry surge?</li><li>Which trade-off would make you reverse this decision?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Bound concurrency and retries, use deadlines and backpressure, preserve idempotency, and make degradation explicit. Recovery must be tested, not assumed.</div><div class="speak">Reverse the choice when measured complexity, tail latency, consistency risk, or on-call burden exceeds the isolation or scaling benefit.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Sketch a production-ready use of high memory. Include SLOs, telemetry, one failure injection, and a rollback or recovery path.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="memory-leaks">
+    <div class="topic-head">
+      <h3>Memory leaks</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>A leak is unintended retention: live objects remain reachable, so the heap baseline rises after GC.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>A single snapshot shows size, not growth; compare dominator trees across controlled intervals.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Take snapshots after warm-up and repeated load; inspect growing retainers such as Map, listeners, timers, or closures.</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating memory leaks as a product choice without measuring its operational cost.</li><li>Explaining only the happy path; senior answers include overload, partial failure, and recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain memory leaks and when you would use it.</li><li>What production signal tells you this design is failing?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak"><strong>Model answer:</strong> A leak is unintended retention: live objects remain reachable, so the heap baseline rises after GC. I would define the SLO, instrument the critical path, and validate the decision under realistic load before standardizing it.</div><div class="speak"><strong>Failure signal:</strong> Watch latency percentiles, error/timeout rate, saturation, backlog, and business-level correctness—not averages alone.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How does this behave during a partial outage or retry surge?</li><li>Which trade-off would make you reverse this decision?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Bound concurrency and retries, use deadlines and backpressure, preserve idempotency, and make degradation explicit. Recovery must be tested, not assumed.</div><div class="speak">Reverse the choice when measured complexity, tail latency, consistency risk, or on-call burden exceeds the isolation or scaling benefit.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Sketch a production-ready use of memory leaks. Include SLOs, telemetry, one failure injection, and a rollback or recovery path.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="event-loop-blocking">
+    <div class="topic-head">
+      <h3>Event-loop blocking</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Long synchronous callbacks delay every timer, socket, and request on that Node.js thread.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Low CPU average can hide periodic 500ms blocks that dominate tail latency.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>const { monitorEventLoopDelay } = require('node:perf_hooks');
+const h = monitorEventLoopDelay({ resolution: 20 });
+h.enable();
+setInterval(() =&gt; console.log('p99 ms', h.percentile(99) / 1e6), 5000);</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating event-loop blocking as a product choice without measuring its operational cost.</li><li>Explaining only the happy path; senior answers include overload, partial failure, and recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain event-loop blocking and when you would use it.</li><li>What production signal tells you this design is failing?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak"><strong>Model answer:</strong> Long synchronous callbacks delay every timer, socket, and request on that Node.js thread. I would define the SLO, instrument the critical path, and validate the decision under realistic load before standardizing it.</div><div class="speak"><strong>Failure signal:</strong> Watch latency percentiles, error/timeout rate, saturation, backlog, and business-level correctness—not averages alone.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How does this behave during a partial outage or retry surge?</li><li>Which trade-off would make you reverse this decision?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Bound concurrency and retries, use deadlines and backpressure, preserve idempotency, and make degradation explicit. Recovery must be tested, not assumed.</div><div class="speak">Reverse the choice when measured complexity, tail latency, consistency risk, or on-call burden exceeds the isolation or scaling benefit.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Sketch a production-ready use of event-loop blocking. Include SLOs, telemetry, one failure injection, and a rollback or recovery path.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="slow-database-queries">
+    <div class="topic-head">
+      <h3>Slow database queries</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Diagnose query shape, execution plan, cardinality estimates, indexes, locks, I/O, and returned row volume.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>An index is useful only when it matches predicates, joins, ordering, and selectivity.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Use EXPLAIN ANALYZE on a captured slow query; verify scanned versus returned rows and production-like parameters.</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating slow database queries as a product choice without measuring its operational cost.</li><li>Explaining only the happy path; senior answers include overload, partial failure, and recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain slow database queries and when you would use it.</li><li>What production signal tells you this design is failing?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak"><strong>Model answer:</strong> Diagnose query shape, execution plan, cardinality estimates, indexes, locks, I/O, and returned row volume. I would define the SLO, instrument the critical path, and validate the decision under realistic load before standardizing it.</div><div class="speak"><strong>Failure signal:</strong> Watch latency percentiles, error/timeout rate, saturation, backlog, and business-level correctness—not averages alone.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How does this behave during a partial outage or retry surge?</li><li>Which trade-off would make you reverse this decision?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Bound concurrency and retries, use deadlines and backpressure, preserve idempotency, and make degradation explicit. Recovery must be tested, not assumed.</div><div class="speak">Reverse the choice when measured complexity, tail latency, consistency risk, or on-call burden exceeds the isolation or scaling benefit.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Sketch a production-ready use of slow database queries. Include SLOs, telemetry, one failure injection, and a rollback or recovery path.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="connection-pool-exhaustion">
+    <div class="topic-head">
+      <h3>Connection pool exhaustion</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>A pool saturates when requests hold connections longer than capacity can replenish them.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Increasing pool size can overload the database and worsen queueing; the root issue may be slow queries, leaks, or transactions.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Graph active, idle, pending, acquire latency, transaction duration, and DB max connections together.</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating connection pool exhaustion as a product choice without measuring its operational cost.</li><li>Explaining only the happy path; senior answers include overload, partial failure, and recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain connection pool exhaustion and when you would use it.</li><li>What production signal tells you this design is failing?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak"><strong>Model answer:</strong> A pool saturates when requests hold connections longer than capacity can replenish them. I would define the SLO, instrument the critical path, and validate the decision under realistic load before standardizing it.</div><div class="speak"><strong>Failure signal:</strong> Watch latency percentiles, error/timeout rate, saturation, backlog, and business-level correctness—not averages alone.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How does this behave during a partial outage or retry surge?</li><li>Which trade-off would make you reverse this decision?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Bound concurrency and retries, use deadlines and backpressure, preserve idempotency, and make degradation explicit. Recovery must be tested, not assumed.</div><div class="speak">Reverse the choice when measured complexity, tail latency, consistency risk, or on-call burden exceeds the isolation or scaling benefit.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Sketch a production-ready use of connection pool exhaustion. Include SLOs, telemetry, one failure injection, and a rollback or recovery path.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="too-many-api-requests">
+    <div class="topic-head">
+      <h3>Too many API requests</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Request amplification comes from polling, retries, chatty service boundaries, duplicate UI effects, or missing batching/cache.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Reducing request count often improves latency and capacity more than micro-optimizing handlers.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Correlate user action → frontend calls → internal fan-out; add request coalescing, pagination, batching, or event push.</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating too many api requests as a product choice without measuring its operational cost.</li><li>Explaining only the happy path; senior answers include overload, partial failure, and recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain too many api requests and when you would use it.</li><li>What production signal tells you this design is failing?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak"><strong>Model answer:</strong> Request amplification comes from polling, retries, chatty service boundaries, duplicate UI effects, or missing batching/cache. I would define the SLO, instrument the critical path, and validate the decision under realistic load before standardizing it.</div><div class="speak"><strong>Failure signal:</strong> Watch latency percentiles, error/timeout rate, saturation, backlog, and business-level correctness—not averages alone.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How does this behave during a partial outage or retry surge?</li><li>Which trade-off would make you reverse this decision?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Bound concurrency and retries, use deadlines and backpressure, preserve idempotency, and make degradation explicit. Recovery must be tested, not assumed.</div><div class="speak">Reverse the choice when measured complexity, tail latency, consistency risk, or on-call burden exceeds the isolation or scaling benefit.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Sketch a production-ready use of too many api requests. Include SLOs, telemetry, one failure injection, and a rollback or recovery path.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="n-1-queries">
+    <div class="topic-head">
+      <h3>N+1 queries</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>N+1 performs one parent query and one child query per row instead of a bounded set.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Round trips and repeated planning dominate even when each individual query is fast.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Replace 101 queries for 100 orders with a join, batched IN query, or request-scoped DataLoader; preserve pagination semantics.</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating n+1 queries as a product choice without measuring its operational cost.</li><li>Explaining only the happy path; senior answers include overload, partial failure, and recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain n+1 queries and when you would use it.</li><li>What production signal tells you this design is failing?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak"><strong>Model answer:</strong> N+1 performs one parent query and one child query per row instead of a bounded set. I would define the SLO, instrument the critical path, and validate the decision under realistic load before standardizing it.</div><div class="speak"><strong>Failure signal:</strong> Watch latency percentiles, error/timeout rate, saturation, backlog, and business-level correctness—not averages alone.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How does this behave during a partial outage or retry surge?</li><li>Which trade-off would make you reverse this decision?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Bound concurrency and retries, use deadlines and backpressure, preserve idempotency, and make degradation explicit. Recovery must be tested, not assumed.</div><div class="speak">Reverse the choice when measured complexity, tail latency, consistency risk, or on-call burden exceeds the isolation or scaling benefit.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Sketch a production-ready use of n+1 queries. Include SLOs, telemetry, one failure injection, and a rollback or recovery path.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="slow-frontend-backend-communication">
+    <div class="topic-head">
+      <h3>Slow frontend/backend communication</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Browser latency includes DNS, connection/TLS, request upload, server time, response download, parsing, and main-thread work.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Server traces alone omit geographic RTT, payload, CORS preflight, and browser scheduling.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Use Resource Timing and Server-Timing; compare TTFB, transfer size, protocol reuse, compression, and region.</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating slow frontend/backend communication as a product choice without measuring its operational cost.</li><li>Explaining only the happy path; senior answers include overload, partial failure, and recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain slow frontend/backend communication and when you would use it.</li><li>What production signal tells you this design is failing?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak"><strong>Model answer:</strong> Browser latency includes DNS, connection/TLS, request upload, server time, response download, parsing, and main-thread work. I would define the SLO, instrument the critical path, and validate the decision under realistic load before standardizing it.</div><div class="speak"><strong>Failure signal:</strong> Watch latency percentiles, error/timeout rate, saturation, backlog, and business-level correctness—not averages alone.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How does this behave during a partial outage or retry surge?</li><li>Which trade-off would make you reverse this decision?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Bound concurrency and retries, use deadlines and backpressure, preserve idempotency, and make degradation explicit. Recovery must be tested, not assumed.</div><div class="speak">Reverse the choice when measured complexity, tail latency, consistency risk, or on-call burden exceeds the isolation or scaling benefit.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Sketch a production-ready use of slow frontend/backend communication. Include SLOs, telemetry, one failure injection, and a rollback or recovery path.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="queue-backlog">
+    <div class="topic-head">
+      <h3>Queue backlog</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Backlog grows when arrival rate exceeds effective completion rate; oldest-message age measures user impact.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Queue depth alone is ambiguous because message sizes and processing times vary.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Track enqueue/completion rate, oldest age, retries, per-message duration, and downstream saturation; shed or prioritize safely.</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating queue backlog as a product choice without measuring its operational cost.</li><li>Explaining only the happy path; senior answers include overload, partial failure, and recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain queue backlog and when you would use it.</li><li>What production signal tells you this design is failing?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak"><strong>Model answer:</strong> Backlog grows when arrival rate exceeds effective completion rate; oldest-message age measures user impact. I would define the SLO, instrument the critical path, and validate the decision under realistic load before standardizing it.</div><div class="speak"><strong>Failure signal:</strong> Watch latency percentiles, error/timeout rate, saturation, backlog, and business-level correctness—not averages alone.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How does this behave during a partial outage or retry surge?</li><li>Which trade-off would make you reverse this decision?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Bound concurrency and retries, use deadlines and backpressure, preserve idempotency, and make degradation explicit. Recovery must be tested, not assumed.</div><div class="speak">Reverse the choice when measured complexity, tail latency, consistency risk, or on-call burden exceeds the isolation or scaling benefit.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Sketch a production-ready use of queue backlog. Include SLOs, telemetry, one failure injection, and a rollback or recovery path.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="failed-jobs">
+    <div class="topic-head">
+      <h3>Failed jobs</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Failed jobs need classification into transient, permanent, poison-data, dependency, and code defects.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>One retry policy cannot correctly handle all classes and may hide permanent failure.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Store error class and attempt metadata; alert on rate; quarantine permanent failures; replay after a verified fix.</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating failed jobs as a product choice without measuring its operational cost.</li><li>Explaining only the happy path; senior answers include overload, partial failure, and recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain failed jobs and when you would use it.</li><li>What production signal tells you this design is failing?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak"><strong>Model answer:</strong> Failed jobs need classification into transient, permanent, poison-data, dependency, and code defects. I would define the SLO, instrument the critical path, and validate the decision under realistic load before standardizing it.</div><div class="speak"><strong>Failure signal:</strong> Watch latency percentiles, error/timeout rate, saturation, backlog, and business-level correctness—not averages alone.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How does this behave during a partial outage or retry surge?</li><li>Which trade-off would make you reverse this decision?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Bound concurrency and retries, use deadlines and backpressure, preserve idempotency, and make degradation explicit. Recovery must be tested, not assumed.</div><div class="speak">Reverse the choice when measured complexity, tail latency, consistency risk, or on-call burden exceeds the isolation or scaling benefit.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Sketch a production-ready use of failed jobs. Include SLOs, telemetry, one failure injection, and a rollback or recovery path.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="retry-storms">
+    <div class="topic-head">
+      <h3>Retry storms</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>A retry storm is positive feedback: failures trigger extra traffic, which prevents recovery and triggers more retries.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Retries consume the same constrained capacity as original work.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Use capped exponential backoff with jitter, retry budgets, circuit breakers, deadlines, and load shedding.</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating retry storms as a product choice without measuring its operational cost.</li><li>Explaining only the happy path; senior answers include overload, partial failure, and recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain retry storms and when you would use it.</li><li>What production signal tells you this design is failing?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak"><strong>Model answer:</strong> A retry storm is positive feedback: failures trigger extra traffic, which prevents recovery and triggers more retries. I would define the SLO, instrument the critical path, and validate the decision under realistic load before standardizing it.</div><div class="speak"><strong>Failure signal:</strong> Watch latency percentiles, error/timeout rate, saturation, backlog, and business-level correctness—not averages alone.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How does this behave during a partial outage or retry surge?</li><li>Which trade-off would make you reverse this decision?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Bound concurrency and retries, use deadlines and backpressure, preserve idempotency, and make degradation explicit. Recovery must be tested, not assumed.</div><div class="speak">Reverse the choice when measured complexity, tail latency, consistency risk, or on-call burden exceeds the isolation or scaling benefit.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Sketch a production-ready use of retry storms. Include SLOs, telemetry, one failure injection, and a rollback or recovery path.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="race-conditions">
+    <div class="topic-head">
+      <h3>Race conditions</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>A race occurs when correctness depends on uncontrolled interleaving of concurrent operations.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Node.js single-threaded JavaScript does not make multi-request or multi-process read-modify-write atomic.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Use an atomic conditional update: UPDATE stock SET qty=qty-1 WHERE sku=? AND qty&gt;=1; verify affected rows.</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating race conditions as a product choice without measuring its operational cost.</li><li>Explaining only the happy path; senior answers include overload, partial failure, and recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain race conditions and when you would use it.</li><li>What production signal tells you this design is failing?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak"><strong>Model answer:</strong> A race occurs when correctness depends on uncontrolled interleaving of concurrent operations. I would define the SLO, instrument the critical path, and validate the decision under realistic load before standardizing it.</div><div class="speak"><strong>Failure signal:</strong> Watch latency percentiles, error/timeout rate, saturation, backlog, and business-level correctness—not averages alone.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How does this behave during a partial outage or retry surge?</li><li>Which trade-off would make you reverse this decision?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Bound concurrency and retries, use deadlines and backpressure, preserve idempotency, and make degradation explicit. Recovery must be tested, not assumed.</div><div class="speak">Reverse the choice when measured complexity, tail latency, consistency risk, or on-call burden exceeds the isolation or scaling benefit.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Sketch a production-ready use of race conditions. Include SLOs, telemetry, one failure injection, and a rollback or recovery path.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="deadlocks">
+    <div class="topic-head">
+      <h3>Deadlocks</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>A deadlock is a cycle of transactions each waiting for a lock held by another.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>The database must abort a victim; applications should minimize cycles and safely retry bounded transactions.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Lock rows in a consistent order, keep transactions short, inspect deadlock graphs, and retry only the aborted transaction.</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating deadlocks as a product choice without measuring its operational cost.</li><li>Explaining only the happy path; senior answers include overload, partial failure, and recovery.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain deadlocks and when you would use it.</li><li>What production signal tells you this design is failing?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak"><strong>Model answer:</strong> A deadlock is a cycle of transactions each waiting for a lock held by another. I would define the SLO, instrument the critical path, and validate the decision under realistic load before standardizing it.</div><div class="speak"><strong>Failure signal:</strong> Watch latency percentiles, error/timeout rate, saturation, backlog, and business-level correctness—not averages alone.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>How does this behave during a partial outage or retry surge?</li><li>Which trade-off would make you reverse this decision?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Bound concurrency and retries, use deadlines and backpressure, preserve idempotency, and make degradation explicit. Recovery must be tested, not assumed.</div><div class="speak">Reverse the choice when measured complexity, tail latency, consistency risk, or on-call burden exceeds the isolation or scaling benefit.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Sketch a production-ready use of deadlocks. Include SLOs, telemetry, one failure injection, and a rollback or recovery path.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="api-latency-incident-runbook">
+    <div class="topic-head">
+      <h3>API 500ms→10s debug runbook</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Treat a sudden latency regression as an incident: stabilize first, preserve evidence, then isolate the changed bottleneck.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>A disciplined runbook prevents random restarts from destroying evidence or shifting load into a failing dependency.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>0–5m: confirm SLO impact and scope; freeze deploys.
+5–10m: compare p50/p99, traffic, errors, saturation, queue age.
+10–20m: inspect traces and recent changes; identify queue vs CPU vs DB vs dependency.
+Mitigate: rollback, shed load, disable feature, cap retries, or fail over.
+Recover: verify burn rate and backlog drain.
+Follow-up: timeline, root cause, tests, capacity and alert fixes.</pre>
+        
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Restarting every instance before collecting profiles, traces, and saturation evidence.</li><li>Scaling callers while a database or dependency is already saturated.</li><li>Declaring recovery when latency drops but the queue backlog is still growing.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>An API moved from 500ms to 10s. What do you do in the first 15 minutes?</li><li>How do you distinguish queueing, CPU, database, and dependency latency?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">First confirm user impact and blast radius, assign incident roles, stop risky changes, and compare golden signals and percentiles with a healthy baseline. Use traces to locate where the extra 9.5 seconds lives.</div><div class="speak">Queueing shows wait/saturation and concurrency pressure; CPU shows profile hotspots/event-loop lag; DB shows acquire/query/lock time; dependencies show child-span latency and timeout/error shifts.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>When do you roll back versus continue diagnosis?</li><li>What evidence must survive the incident?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">Roll back early when timing and scope implicate a reversible deploy and rollback risk is lower than ongoing SLO burn. Mitigate independently if rollback cannot repair state or dependency overload.</div><div class="speak">Preserve deploy/config timeline, dashboards, representative traces, logs, profiles, query plans, queue metrics, mitigation decisions, and exact recovery criteria.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Run a tabletop incident. Produce a 15-minute timeline, three falsifiable hypotheses, a mitigation decision, recovery checks, and five post-incident actions.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+          
+          
+          <div class="phase-nav"><a class="btn btn-ghost" href="11-system-design.html">← System Design</a><a class="btn btn-primary" href="13-docker.html">Docker →</a></div>
+        </div>
+      </div>
+      <footer class="fine">Phase 12 · Node.js / TypeScript interview preparation</footer>
+    </main>
+  </div>
+  <script src="../assets/prep.js"></script>
+</body>
+</html>

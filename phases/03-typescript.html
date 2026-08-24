@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TypeScript Mastery — Node.js Interview Prep</title>
+  <link rel="stylesheet" href="../assets/prep.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" />
+</head>
+<body data-page="phase" data-phase="03">
+  <div class="app">
+    <nav class="sidebar">
+      <h1>Node.js Interview Prep</h1>
+      <p class="tag">5-year · Backend / Full-stack · Senior track</p>
+      <a class="nav-link" href="../nodejs-interview-preparation.html">← Hub</a>
+      <div class="nav-group">Phases</div>
+      <div id="phase-links">
+        <a class="nav-link" href="01-javascript.html">01 JavaScript</a>
+        <a class="nav-link" href="02-nodejs.html">02 Node.js</a>
+        <a class="nav-link" href="03-typescript.html">03 TypeScript</a>
+        <a class="nav-link" href="04-express.html">04 Express</a>
+        <a class="nav-link" href="05-rest.html">05 REST APIs</a>
+        <a class="nav-link" href="06-databases.html">06 Databases</a>
+        <a class="nav-link" href="07-redis.html">07 Redis</a>
+        <a class="nav-link" href="08-auth-security.html">08 Auth &amp; Security</a>
+        <a class="nav-link" href="09-microservices.html">09 Microservices</a>
+        <a class="nav-link" href="10-queues.html">10 Queues</a>
+        <a class="nav-link" href="11-system-design.html">11 System Design</a>
+        <a class="nav-link" href="12-performance.html">12 Performance</a>
+        <a class="nav-link" href="13-docker.html">13 Docker &amp; Deploy</a>
+        <a class="nav-link" href="14-testing.html">14 Testing</a>
+        <a class="nav-link" href="15-coding.html">15 Coding</a>
+        <a class="nav-link" href="16-projects.html">16 Projects</a>
+      </div>
+      <div class="meta">Mark topics reviewed as you go. Progress is stored in this browser.</div>
+    </nav>
+    <main>
+      <p class="kicker">Phase 03 · Type-system design</p>
+      <header class="hero">
+        <h2>TypeScript Mastery</h2>
+        <p class="lead">Model valid domain states, protect runtime boundaries, and design maintainable type-safe APIs without type-level ceremony.</p>
+      </header>
+      <div class="note">Interview shape: claim → mechanism → production example → failure → trade-off. Reveal answers only after you attempt them aloud.</div>
+      <div class="phase-layout">
+        <aside class="toc">
+          <strong>On this page</strong>
+          <div class="toc-list"></div>
+        </aside>
+        <div class="topics">
+          
+  <article class="topic" id="types-interfaces">
+    <div class="topic-head">
+      <h3>Types vs interfaces</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Both describe object shapes. Interfaces support declaration merging and extension; type aliases also represent unions, primitives, tuples, and mapped/conditional types.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>TypeScript is structurally typed, so choose based on modeling and API evolution rather than performance.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>interface Order { id: string; total: number }
+type OrderState = &quot;pending&quot; | &quot;paid&quot;;</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Compile-time contracts; no runtime output.</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Types vs interfaces only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain Types vs interfaces and give a production example.</li><li>What bug would reveal a weak understanding of Types vs interfaces?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Types vs interfaces is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain Types vs interfaces in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates Types vs interfaces, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="generics">
+    <div class="topic-head">
+      <h3>Generics</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Generics preserve relationships between inputs and outputs without discarding information into broad unions or any.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Type parameters let one implementation remain reusable while inference carries concrete order/payment types to callers.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>function byId&lt;T extends { id: string }&gt;(xs: T[], id: string): T | undefined {
+  return xs.find(x =&gt; x.id === id);
+}</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Returns the same element type T.</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Generics only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain Generics and give a production example.</li><li>What bug would reveal a weak understanding of Generics?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Generics is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain Generics in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates Generics, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="utility-types">
+    <div class="topic-head">
+      <h3>Utility types</h3>
+      <span class="badge med">Medium</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p><code>Pick</code>, <code>Omit</code>, <code>Partial</code>, <code>Required</code>, <code>Readonly</code>, and <code>Record</code> derive contracts from canonical models.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Derivation reduces drift, but blindly using Partial for updates can permit invalid domain states.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>type OrderSummary = Pick&lt;Order, &quot;id&quot; | &quot;total&quot;&gt;;
+type OrderPatch = Partial&lt;Omit&lt;Order, &quot;id&quot;&gt;&gt;;</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Derived compile-time shapes.</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Utility types only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain Utility types and give a production example.</li><li>What bug would reveal a weak understanding of Utility types?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Utility types is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain Utility types in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates Utility types, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="conditional-types">
+    <div class="topic-head">
+      <h3>Conditional types</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Conditional types select a type branch and distribute over naked union parameters.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>They encode type-level decisions used by libraries, but excessive cleverness produces slow, unreadable diagnostics.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>type ApiResult&lt;T&gt; = T extends Error ? { ok: false; error: T } : { ok: true; data: T };</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Branch selected from T.</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Conditional types only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain Conditional types and give a production example.</li><li>What bug would reveal a weak understanding of Conditional types?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Conditional types is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain Conditional types in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates Conditional types, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="mapped-types">
+    <div class="topic-head">
+      <h3>Mapped types</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Mapped types iterate property keys and can transform names, optionality, readonly status, and value types.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>They keep related DTOs synchronized with a source model while preserving key-level precision.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>type Nullable&lt;T&gt; = { [K in keyof T]: T[K] | null };</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Every property also accepts null.</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Mapped types only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain Mapped types and give a production example.</li><li>What bug would reveal a weak understanding of Mapped types?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Mapped types is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain Mapped types in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates Mapped types, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="type-narrowing">
+    <div class="topic-head">
+      <h3>Type narrowing</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Control-flow analysis refines unions after checks, assignments, returns, and discriminants.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>The compiler follows reachable paths, allowing broad boundary inputs to become precise only after evidence.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>function total(x: number | { total: number }) {
+  return typeof x === &quot;number&quot; ? x : x.total;
+}</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Both paths return number.</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Type narrowing only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain Type narrowing and give a production example.</li><li>What bug would reveal a weak understanding of Type narrowing?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Type narrowing is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain Type narrowing in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates Type narrowing, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="type-guards">
+    <div class="topic-head">
+      <h3>Type guards</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Built-in checks and predicates such as <code>x is Payment</code> narrow values; assertion functions can fail fast.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>A custom guard is trusted by the compiler, so its runtime implementation must be tested like validation code.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>function isPayment(x: unknown): x is { id: string } {
+  return typeof x === &quot;object&quot; &amp;&amp; x !== null &amp;&amp; &quot;id&quot; in x;
+}</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Narrows unknown after true.</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Type guards only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain Type guards and give a production example.</li><li>What bug would reveal a weak understanding of Type guards?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Type guards is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain Type guards in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates Type guards, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="discriminated-unions">
+    <div class="topic-head">
+      <h3>Discriminated unions</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>A shared literal field models mutually exclusive states and enables exhaustive switches.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Invalid combinations become unrepresentable, which is ideal for payment pending, captured, declined, and refunded states.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>type Payment = { state: &quot;pending&quot; } | { state: &quot;paid&quot;; receipt: string };
+function receipt(p: Payment) { return p.state === &quot;paid&quot; ? p.receipt : undefined; }</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Safe state-specific access.</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Discriminated unions only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain Discriminated unions and give a production example.</li><li>What bug would reveal a weak understanding of Discriminated unions?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Discriminated unions is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain Discriminated unions in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates Discriminated unions, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="keyof">
+    <div class="topic-head">
+      <h3>keyof</h3>
+      <span class="badge med">Medium</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p><code>keyof T</code> forms a union of known property keys and supports type-safe property APIs.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Relating a key parameter to an object prevents arbitrary string indexing and preserves the selected value type.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>function get&lt;T, K extends keyof T&gt;(obj: T, key: K): T[K] { return obj[key]; }</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Return type follows selected key.</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining keyof only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain keyof and give a production example.</li><li>What bug would reveal a weak understanding of keyof?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">keyof is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain keyof in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates keyof, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="typeof">
+    <div class="topic-head">
+      <h3>typeof</h3>
+      <span class="badge med">Medium</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>In type positions, <code>typeof value</code> captures the static type of a runtime declaration; with <code>as const</code> it preserves literals.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>It makes a runtime constant the source of truth instead of duplicating a separate type.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>const states = [&quot;pending&quot;, &quot;paid&quot;] as const;
+type State = (typeof states)[number];</pre>
+        <div class="expected"><strong>Expected:</strong><pre>&quot;pending&quot; | &quot;paid&quot;</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining typeof only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain typeof and give a production example.</li><li>What bug would reveal a weak understanding of typeof?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">typeof is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain typeof in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates typeof, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="infer">
+    <div class="topic-head">
+      <h3>infer</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p><code>infer</code> introduces a type variable inside a conditional type pattern.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>It extracts components such as Promise values, parameters, or return values without callers supplying them.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>type AwaitedValue&lt;T&gt; = T extends Promise&lt;infer U&gt; ? U : T;</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Extracts U from Promise&lt;U&gt;.</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining infer only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain infer and give a production example.</li><li>What bug would reveal a weak understanding of infer?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">infer is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain infer in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates infer, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="function-overloads">
+    <div class="topic-head">
+      <h3>Function overloads</h3>
+      <span class="badge med">Medium</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Overload signatures describe correlated call shapes; one implementation signature must safely handle all cases.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Overloads improve APIs when unions lose input/output correlation, but too many signatures signal a confused API.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>function find(id: string): Order | undefined;
+function find(ids: string[]): Order[];
+function find(x: string | string[]) { /* implementation */ }</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Caller receives correlated return type.</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Function overloads only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain Function overloads and give a production example.</li><li>What bug would reveal a weak understanding of Function overloads?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Function overloads is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain Function overloads in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates Function overloads, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="generic-constraints">
+    <div class="topic-head">
+      <h3>Generic constraints</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Constraints require capabilities from a type parameter while preserving its more specific shape.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>They allow reusable algorithms to access known fields without widening the result.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>function audit&lt;T extends { id: string }&gt;(value: T): T { console.log(value.id); return value; }</pre>
+        <div class="expected"><strong>Expected:</strong><pre>T remains intact.</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Generic constraints only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain Generic constraints and give a production example.</li><li>What bug would reveal a weak understanding of Generic constraints?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Generic constraints is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain Generic constraints in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates Generic constraints, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="enums-unions">
+    <div class="topic-head">
+      <h3>Enums vs union types</h3>
+      <span class="badge med">Medium</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>String literal unions are lightweight and compose well; enums create a runtime object and can suit stable named constants.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>The choice affects emitted JavaScript and interoperability. Object literals with <code>as const</code> often provide both runtime and type values.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>const Status = { Pending: &quot;pending&quot;, Paid: &quot;paid&quot; } as const;
+type Status = (typeof Status)[keyof typeof Status];</pre>
+        <div class="expected"><strong>Expected:</strong><pre>&quot;pending&quot; | &quot;paid&quot;</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Enums vs union types only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain Enums vs union types and give a production example.</li><li>What bug would reveal a weak understanding of Enums vs union types?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Enums vs union types is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain Enums vs union types in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates Enums vs union types, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="unknown-any">
+    <div class="topic-head">
+      <h3>unknown vs any</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p><code>unknown</code> requires narrowing before use; <code>any</code> disables checking and propagates unsafety.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>External JSON is not trustworthy because TypeScript erases at runtime, so unknown creates an explicit validation boundary.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>const payload: unknown = JSON.parse(input);
+// validate payload before accessing fields</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Unsafe access is rejected.</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining unknown vs any only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain unknown vs any and give a production example.</li><li>What bug would reveal a weak understanding of unknown vs any?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">unknown vs any is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain unknown vs any in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates unknown vs any, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="never">
+    <div class="topic-head">
+      <h3>never</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p><code>never</code> represents impossible completion or values and powers exhaustive checks.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>When all union variants are handled, the remainder is never; a new variant then creates a compile error.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>function impossible(x: never): never { throw new Error(String(x)); }</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Exhaustiveness helper.</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining never only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain never and give a production example.</li><li>What bug would reveal a weak understanding of never?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">never is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain never in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates never, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="type-assertions">
+    <div class="topic-head">
+      <h3>Type assertions</h3>
+      <span class="badge med">Medium</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Assertions tell the compiler to trust the programmer; they perform no runtime conversion or validation.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>They are escape hatches for knowledge TypeScript cannot prove, and should be narrow, documented, and boundary-tested.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>const body = raw as PaymentRequest; // unsafe without validation</pre>
+        <div class="expected"><strong>Expected:</strong><pre>No runtime check occurs.</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Type assertions only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain Type assertions and give a production example.</li><li>What bug would reveal a weak understanding of Type assertions?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Type assertions is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain Type assertions in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates Type assertions, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="declaration-files">
+    <div class="topic-head">
+      <h3>Declaration files</h3>
+      <span class="badge med">Medium</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p><code>.d.ts</code> files describe JavaScript modules, globals, and package APIs without emitting code.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>They bridge untyped runtime code into static checking; declarations must match actual exports and versions.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>declare module &quot;legacy-payments&quot; {
+  export function charge(cents: number): Promise&lt;string&gt;;
+}</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Adds compile-time module types.</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Declaration files only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain Declaration files and give a production example.</li><li>What bug would reveal a weak understanding of Declaration files?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Declaration files is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain Declaration files in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates Declaration files, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="module-augmentation">
+    <div class="topic-head">
+      <h3>Module augmentation</h3>
+      <span class="badge low">Low</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Module augmentation merges additional declarations into an existing module, commonly for framework request context.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>It can model runtime decoration, but global augmentation creates coupling and must be loaded consistently.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>declare module &quot;express-serve-static-core&quot; {
+  interface Request { principal?: { id: string } }
+}</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Request gains principal type.</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Module augmentation only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain Module augmentation and give a production example.</li><li>What bug would reveal a weak understanding of Module augmentation?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Module augmentation is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain Module augmentation in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates Module augmentation, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="type-safe-apis">
+    <div class="topic-head">
+      <h3>Type-safe APIs</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Type-safe APIs share or generate request, response, and error contracts while still validating every runtime boundary.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Static types prevent internal drift; schemas, versioning, and contract tests handle clients that do not run your compiler.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>type Result&lt;T&gt; = { ok: true; data: T } | { ok: false; code: string };</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Exhaustive API result handling.</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Type-safe APIs only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain Type-safe APIs and give a production example.</li><li>What bug would reveal a weak understanding of Type-safe APIs?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Type-safe APIs is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain Type-safe APIs in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates Type-safe APIs, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="zod-validation">
+    <div class="topic-head">
+      <h3>Zod / runtime validation</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Runtime schemas parse unknown input, return typed output, and can compose transforms and refinements.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>TypeScript disappears after compilation; schema inference reduces duplication while runtime parsing protects HTTP and queue boundaries.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>const Payment = z.object({ orderId: z.string().uuid(), amount: z.number().positive() });
+const payment = Payment.parse(req.body);</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Validated typed payment or structured error.</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining Zod / runtime validation only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain Zod / runtime validation and give a production example.</li><li>What bug would reveal a weak understanding of Zod / runtime validation?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Zod / runtime validation is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain Zod / runtime validation in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates Zod / runtime validation, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="compiler-config">
+    <div class="topic-head">
+      <h3>TypeScript compiler configuration</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Use strictness, module/moduleResolution aligned to runtime, target/lib, noUncheckedIndexedAccess, exactOptionalPropertyTypes, source maps, and isolated build settings deliberately.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>The compiler configuration defines project-wide soundness and emit semantics; copied defaults can produce runtime module failures or hidden null bugs.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>{
+  &quot;compilerOptions&quot;: { &quot;strict&quot;: true, &quot;noUncheckedIndexedAccess&quot;: true, &quot;exactOptionalPropertyTypes&quot;: true }
+}</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Stricter project-wide checks.</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Explaining TypeScript compiler configuration only by syntax and not by runtime behavior.</li><li>Ignoring failure modes, observability, and the order/payment-service impact.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>Explain TypeScript compiler configuration and give a production example.</li><li>What bug would reveal a weak understanding of TypeScript compiler configuration?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">TypeScript compiler configuration is not just syntax; I explain its runtime mechanism, then show where it affects correctness or latency in an order or payment flow.</div><div class="speak">I would reproduce the behavior with a minimal case, add focused telemetry, and verify the fix under concurrency rather than relying on intuition.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-offs would make you avoid or constrain TypeScript compiler configuration in a high-throughput service?</li><li>How would you test and observe this behavior in production?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I choose based on correctness, operational cost, team familiarity, and measurable workload characteristics. I make assumptions explicit and preserve a rollback path.</div><div class="speak">I use deterministic unit tests where possible, integration tests at boundaries, load or fault tests for concurrency, and metrics plus structured logs for production evidence.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Create a minimal order-service example that demonstrates TypeScript compiler configuration, one failure case, and a test that proves the intended behavior.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+          
+          
+          <div class="phase-nav"><a class="btn btn-ghost" href="02-nodejs.html">← Node.js Deep Dive</a><a class="btn btn-primary" href="04-express.html">Express & API Architecture →</a></div>
+        </div>
+      </div>
+      <footer class="fine">Phase 03 · Node.js / TypeScript interview preparation</footer>
+    </main>
+  </div>
+  <script src="../assets/prep.js"></script>
+</body>
+</html>

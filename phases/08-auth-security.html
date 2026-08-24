@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Authentication &amp; Security — Node.js Interview Prep</title>
+  <link rel="stylesheet" href="../assets/prep.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" />
+</head>
+<body data-page="phase" data-phase="08">
+  <div class="app">
+    <nav class="sidebar">
+      <h1>Node.js Interview Prep</h1>
+      <p class="tag">5-year · Backend / Full-stack · Senior track</p>
+      <a class="nav-link" href="../nodejs-interview-preparation.html">← Hub</a>
+      <div class="nav-group">Phases</div>
+      <div id="phase-links">
+        <a class="nav-link" href="01-javascript.html">01 JavaScript</a>
+        <a class="nav-link" href="02-nodejs.html">02 Node.js</a>
+        <a class="nav-link" href="03-typescript.html">03 TypeScript</a>
+        <a class="nav-link" href="04-express.html">04 Express</a>
+        <a class="nav-link" href="05-rest.html">05 REST APIs</a>
+        <a class="nav-link" href="06-databases.html">06 Databases</a>
+        <a class="nav-link" href="07-redis.html">07 Redis</a>
+        <a class="nav-link" href="08-auth-security.html">08 Auth &amp; Security</a>
+        <a class="nav-link" href="09-microservices.html">09 Microservices</a>
+        <a class="nav-link" href="10-queues.html">10 Queues</a>
+        <a class="nav-link" href="11-system-design.html">11 System Design</a>
+        <a class="nav-link" href="12-performance.html">12 Performance</a>
+        <a class="nav-link" href="13-docker.html">13 Docker &amp; Deploy</a>
+        <a class="nav-link" href="14-testing.html">14 Testing</a>
+        <a class="nav-link" href="15-coding.html">15 Coding</a>
+        <a class="nav-link" href="16-projects.html">16 Projects</a>
+      </div>
+      <div class="meta">Mark topics reviewed as you go. Progress is stored in this browser.</div>
+    </nav>
+    <main>
+      <p class="kicker">Phase 08 · Identity, authorization, and attack resistance</p>
+      <header class="hero">
+        <h2>Authentication &amp; Security</h2>
+        <p class="lead">Connect each common attack to concrete preventive, detective, and recovery controls for a senior Node.js order/payment platform.</p>
+      </header>
+      <div class="note">Interview shape: claim → mechanism → production example → failure → trade-off. Reveal answers only after you attempt them aloud.</div>
+      <div class="phase-layout">
+        <aside class="toc">
+          <strong>On this page</strong>
+          <div class="toc-list"></div>
+        </aside>
+        <div class="topics">
+          
+  <article class="topic" id="jwt">
+    <div class="topic-head">
+      <h3>JWT</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>JWTs are signed claim containers. Pin allowed algorithms and validate signature, issuer, audience, expiry/not-before, token type, and required claims.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>A valid signature proves issuer possession of a key, not user authorization, confidentiality, freshness, or correct audience.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Header: alg=RS256, kid=key-2026-08
+Claims: iss=id.example, aud=orders-api, typ=access, exp=...
+Verify against cached JWKS with rotation and unknown-kid refresh limits</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Reject none, unexpected algorithms, wrong audience, expiry, or token type</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Attack → control: alg confusion, forged or cross-service token → pin algorithms and validate iss/aud/typ with managed keys.</li><li>Trusting client-visible claims or identifiers without server-side authorization.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply JWT to an order/payment API?</li><li>What failure mode changes your design for JWT?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Attack → control: alg confusion, forged or cross-service token → pin algorithms and validate iss/aud/typ with managed keys.</div><div class="speak">I treat JWT as one layer: authenticate the principal, authorize this action on this object, constrain lifetime/scope, and make revocation and detection operational.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default JWT approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready JWT decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="oauth-2-0">
+    <div class="topic-head">
+      <h3>OAuth 2.0</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>OAuth 2.0 is delegated authorization. Authorization Code + PKCE is the default user flow; Client Credentials serves machine identities.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>It separates credential handling, consent, clients, authorization servers, and resource servers.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>User client: Authorization Code + PKCE
+Service: Client Credentials + private_key_jwt/mTLS where needed
+API: validate audience and scopes</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Do not use OAuth access tokens as proof of identity without OIDC</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Attack → control: authorization-code interception or login CSRF → PKCE, state, exact redirect URIs, one-time short-lived codes.</li><li>Trusting client-visible claims or identifiers without server-side authorization.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply OAuth 2.0 to an order/payment API?</li><li>What failure mode changes your design for OAuth 2.0?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Attack → control: authorization-code interception or login CSRF → PKCE, state, exact redirect URIs, one-time short-lived codes.</div><div class="speak">I treat OAuth 2.0 as one layer: authenticate the principal, authorize this action on this object, constrain lifetime/scope, and make revocation and detection operational.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default OAuth 2.0 approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready OAuth 2.0 decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="openid-connect">
+    <div class="topic-head">
+      <h3>OpenID Connect</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>OIDC adds authentication and identity claims to OAuth via an ID token, UserInfo endpoint, discovery, nonce, and standardized subject semantics.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>It lets a client verify an authentication event while access tokens remain intended for APIs.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Client validates ID token: iss, aud, azp, exp, nonce
+API validates access token: aud=orders-api, scope
+Stable identity key: (iss, sub)</pre>
+        <div class="expected"><strong>Expected:</strong><pre>ID token authenticates to client; access token authorizes API</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Attack → control: token substitution/replay → validate ID-token nonce, issuer, audience/azp, signature and expiry; never send ID token to APIs.</li><li>Trusting client-visible claims or identifiers without server-side authorization.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply OpenID Connect to an order/payment API?</li><li>What failure mode changes your design for OpenID Connect?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Attack → control: token substitution/replay → validate ID-token nonce, issuer, audience/azp, signature and expiry; never send ID token to APIs.</div><div class="speak">I treat OpenID Connect as one layer: authenticate the principal, authorize this action on this object, constrain lifetime/scope, and make revocation and detection operational.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default OpenID Connect approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready OpenID Connect decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="access-and-refresh-tokens">
+    <div class="topic-head">
+      <h3>Access and refresh tokens</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Access tokens are short-lived and audience/scoped; refresh tokens are longer-lived authorization-server credentials that should rotate with reuse detection.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Separating lifetimes limits bearer replay while preserving sessions.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Access: memory, 5–15 min, aud=orders-api
+Refresh: Secure HttpOnly cookie, rotated per use
+Reuse of old refresh token: revoke family and require login</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Never persist browser access tokens in localStorage when a safer BFF/session design is available</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Attack → control: stolen bearer/refresh token → short access TTL, sender constraint where possible, secure storage, refresh rotation and family revocation.</li><li>Trusting client-visible claims or identifiers without server-side authorization.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply Access and refresh tokens to an order/payment API?</li><li>What failure mode changes your design for Access and refresh tokens?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Attack → control: stolen bearer/refresh token → short access TTL, sender constraint where possible, secure storage, refresh rotation and family revocation.</div><div class="speak">I treat Access and refresh tokens as one layer: authenticate the principal, authorize this action on this object, constrain lifetime/scope, and make revocation and detection operational.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default Access and refresh tokens approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready Access and refresh tokens decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="password-hashing">
+    <div class="topic-head">
+      <h3>Password hashing</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Password storage uses a salted, deliberately expensive password KDF and stores its encoded parameters with the hash; optional pepper is held outside the database.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Offline attackers can test guesses without rate limits, so per-guess cost and unique salts reduce throughput and precomputation.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>const hash = await argon2.hash(password, {
+  type: argon2.argon2id, memoryCost: 65536, timeCost: 3, parallelism: 1
+});
+const ok = await argon2.verify(hash, candidate);</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Calibrate to an acceptable server latency and rehash when parameters age</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Attack → control: stolen password database → Argon2id/bcrypt with calibrated cost, unique salts, optional managed pepper, breached-password checks.</li><li>Trusting client-visible claims or identifiers without server-side authorization.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply Password hashing to an order/payment API?</li><li>What failure mode changes your design for Password hashing?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Attack → control: stolen password database → Argon2id/bcrypt with calibrated cost, unique salts, optional managed pepper, breached-password checks.</div><div class="speak">I treat Password hashing as one layer: authenticate the principal, authorize this action on this object, constrain lifetime/scope, and make revocation and detection operational.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default Password hashing approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready Password hashing decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="bcrypt-and-argon2">
+    <div class="topic-head">
+      <h3>bcrypt and Argon2</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Argon2id is a modern memory-hard default. bcrypt is mature but has a 72-byte input limit and primarily raises CPU cost.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Algorithm choice and calibrated parameters determine resistance to GPU/ASIC cracking and server-side denial of service.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Argon2id: benchmark memory/time/parallelism in production class hardware
+bcrypt: cost benchmark + explicit max input handling
+On login: verify old hash, then opportunistically rehash</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Versioned encoded hashes permit gradual migration</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Attack → control: GPU cracking → prefer calibrated Argon2id memory/time cost; for bcrypt enforce input handling and a strong cost.</li><li>Trusting client-visible claims or identifiers without server-side authorization.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply bcrypt and Argon2 to an order/payment API?</li><li>What failure mode changes your design for bcrypt and Argon2?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Attack → control: GPU cracking → prefer calibrated Argon2id memory/time cost; for bcrypt enforce input handling and a strong cost.</div><div class="speak">I treat bcrypt and Argon2 as one layer: authenticate the principal, authorize this action on this object, constrain lifetime/scope, and make revocation and detection operational.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default bcrypt and Argon2 approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready bcrypt and Argon2 decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="sessions">
+    <div class="topic-head">
+      <h3>Sessions</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Server-side sessions map a high-entropy opaque ID to identity, authentication context, expiry, and authorization version; rotate on privilege changes.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>They simplify revocation and keep claims fresh, at the cost of shared state.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Cookie: __Host-session=&lt;256-bit random&gt;; Secure; HttpOnly; SameSite=Lax; Path=/
+Server record: userId, authTime, rolesVersion, idleExp, absoluteExp</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Store a hash of the session ID if session storage disclosure is in scope</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Attack → control: session fixation/hijacking → rotate ID after login, Secure HttpOnly SameSite cookie, idle/absolute expiry and revocation.</li><li>Trusting client-visible claims or identifiers without server-side authorization.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply Sessions to an order/payment API?</li><li>What failure mode changes your design for Sessions?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Attack → control: session fixation/hijacking → rotate ID after login, Secure HttpOnly SameSite cookie, idle/absolute expiry and revocation.</div><div class="speak">I treat Sessions as one layer: authenticate the principal, authorize this action on this object, constrain lifetime/scope, and make revocation and detection operational.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default Sessions approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready Sessions decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="rbac">
+    <div class="topic-head">
+      <h3>RBAC</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Role-based access control assigns permissions to roles and roles to principals. Roles should represent stable job functions, not every contextual exception.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>RBAC simplifies administration but can cause role explosion and does not replace object ownership or tenant checks.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>authorize(user, 'order:refund', order, ({ roles, tenantId }, resource) =&gt;
+  roles.includes('support_refunds') &amp;&amp; tenantId === resource.tenantId
+);</pre>
+        <div class="expected"><strong>Expected:</strong><pre>A role permits the action; resource context constrains the target</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Attack → control: horizontal/vertical privilege escalation → centralized deny-by-default policy using role permission plus tenant/object conditions.</li><li>Trusting client-visible claims or identifiers without server-side authorization.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply RBAC to an order/payment API?</li><li>What failure mode changes your design for RBAC?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Attack → control: horizontal/vertical privilege escalation → centralized deny-by-default policy using role permission plus tenant/object conditions.</div><div class="speak">I treat RBAC as one layer: authenticate the principal, authorize this action on this object, constrain lifetime/scope, and make revocation and detection operational.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default RBAC approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready RBAC decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="permissions">
+    <div class="topic-head">
+      <h3>Permissions</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Permissions are action-oriented capabilities such as order:read or payment:refund, evaluated with principal, resource, and environment context.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Fine-grained permissions create stable policy vocabulary and least privilege, while clients must never be the source of truth.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Principal: user=17 tenant=acme
+Action: payment:refund
+Resource: payment.tenant=acme, amount=4999
+Policy: permission + same tenant + refund window</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Log policy decision ID and reason without leaking sensitive policy internals</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Attack → control: BOLA/IDOR → authorize every object using server-loaded tenant/ownership data, not guessed IDs or UI visibility.</li><li>Trusting client-visible claims or identifiers without server-side authorization.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply Permissions to an order/payment API?</li><li>What failure mode changes your design for Permissions?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Attack → control: BOLA/IDOR → authorize every object using server-loaded tenant/ownership data, not guessed IDs or UI visibility.</div><div class="speak">I treat Permissions as one layer: authenticate the principal, authorize this action on this object, constrain lifetime/scope, and make revocation and detection operational.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default Permissions approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready Permissions decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="api-keys">
+    <div class="topic-head">
+      <h3>API keys</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>API keys identify a calling project or service and should be random, scoped, hashed at rest, prefixed for identification, rotatable, and separately rate-limited.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>They are simple bearer credentials, not end-user identity or proof of request integrity.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Authorization: ApiKey live_kid_abcd.&lt;secret&gt;
+DB stores kid, hash(secret), scopes, owner, expiresAt, lastUsedAt
+Show secret once</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Never put API keys in URLs or browser-delivered code</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Attack → control: leaked key → least scopes, hash at rest, secret scanning, rotation/revocation, anomaly detection, optional signed requests.</li><li>Trusting client-visible claims or identifiers without server-side authorization.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply API keys to an order/payment API?</li><li>What failure mode changes your design for API keys?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Attack → control: leaked key → least scopes, hash at rest, secret scanning, rotation/revocation, anomaly detection, optional signed requests.</div><div class="speak">I treat API keys as one layer: authenticate the principal, authorize this action on this object, constrain lifetime/scope, and make revocation and detection operational.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default API keys approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready API keys decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="cors">
+    <div class="topic-head">
+      <h3>CORS</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>CORS controls whether browser JavaScript may read a cross-origin response. Credentialed requests require exact trusted origins and Vary: Origin.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>It is a browser sharing policy, not authentication, authorization, or protection from non-browser clients.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Access-Control-Allow-Origin: https://shop.example
+Access-Control-Allow-Credentials: true
+Vary: Origin
+Preflight validates requested method and headers</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Do not reflect Origin merely because it is present</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Attack → control: hostile origin reads credentialed data → strict origin allowlist, no wildcard with credentials, minimal methods/headers.</li><li>Trusting client-visible claims or identifiers without server-side authorization.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply CORS to an order/payment API?</li><li>What failure mode changes your design for CORS?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Attack → control: hostile origin reads credentialed data → strict origin allowlist, no wildcard with credentials, minimal methods/headers.</div><div class="speak">I treat CORS as one layer: authenticate the principal, authorize this action on this object, constrain lifetime/scope, and make revocation and detection operational.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default CORS approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready CORS decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="csrf">
+    <div class="topic-head">
+      <h3>CSRF</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>CSRF exploits ambient browser credentials to trigger state changes. SameSite, origin/fetch-metadata checks, and synchronizer or double-submit tokens provide layers.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>The attacker need not read the response for a forged transfer, address change, or order cancellation to succeed.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>POST /orders/101/cancel
+Cookie: session=...
+X-CSRF-Token: random bound to session
+Origin: https://shop.example</pre>
+        <div class="expected"><strong>Expected:</strong><pre>GET remains safe; token is not stored in a cross-site-readable location</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Attack → control: cross-site state-changing request → SameSite cookie + CSRF token + Origin/Sec-Fetch-Site validation.</li><li>Trusting client-visible claims or identifiers without server-side authorization.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply CSRF to an order/payment API?</li><li>What failure mode changes your design for CSRF?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Attack → control: cross-site state-changing request → SameSite cookie + CSRF token + Origin/Sec-Fetch-Site validation.</div><div class="speak">I treat CSRF as one layer: authenticate the principal, authorize this action on this object, constrain lifetime/scope, and make revocation and detection operational.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default CSRF approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready CSRF decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="xss">
+    <div class="topic-head">
+      <h3>XSS</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>XSS executes attacker-controlled script in a trusted origin. Prevent with context-aware output encoding, safe DOM APIs, sanitization for allowed HTML, and CSP defense in depth.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Once script runs in-origin it can act as the user even if HttpOnly prevents directly reading the session cookie.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Render order note as textContent, not innerHTML
+Content-Security-Policy: default-src 'self'; script-src 'nonce-&lt;random&gt;'; object-src 'none'; base-uri 'none'</pre>
+        <div class="expected"><strong>Expected:</strong><pre>HttpOnly reduces token theft but does not stop authenticated actions by injected script</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Attack → control: stored/reflected/DOM XSS → auto-escaping, no unsafe sinks, vetted sanitizer, strict CSP with nonces.</li><li>Trusting client-visible claims or identifiers without server-side authorization.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply XSS to an order/payment API?</li><li>What failure mode changes your design for XSS?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Attack → control: stored/reflected/DOM XSS → auto-escaping, no unsafe sinks, vetted sanitizer, strict CSP with nonces.</div><div class="speak">I treat XSS as one layer: authenticate the principal, authorize this action on this object, constrain lifetime/scope, and make revocation and detection operational.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default XSS approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready XSS decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="sql-injection">
+    <div class="topic-head">
+      <h3>SQL injection</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>SQL injection occurs when untrusted data changes query structure. Parameterized queries separate code from values; allowlist dynamic identifiers.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Escaping is context fragile, and ORMs are safe only when their parameterization is not bypassed.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>const order = await prisma.order.findUnique({ where: { id: BigInt(req.params.id) } });
+// Raw: prisma.$queryRaw`SELECT * FROM orders WHERE id = ${id}`
+// Never $queryRawUnsafe with concatenated input.</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Input remains data and cannot add SQL syntax</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Attack → control: crafted order ID alters SQL → placeholders/prepared statements, allowlisted sort columns, least-privilege DB role.</li><li>Trusting client-visible claims or identifiers without server-side authorization.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply SQL injection to an order/payment API?</li><li>What failure mode changes your design for SQL injection?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Attack → control: crafted order ID alters SQL → placeholders/prepared statements, allowlisted sort columns, least-privilege DB role.</div><div class="speak">I treat SQL injection as one layer: authenticate the principal, authorize this action on this object, constrain lifetime/scope, and make revocation and detection operational.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default SQL injection approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready SQL injection decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="ssrf">
+    <div class="topic-head">
+      <h3>SSRF</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>SSRF makes a server fetch an attacker-influenced destination, potentially reaching metadata, loopback, private networks, or trusted services.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Server network position and credentials make outbound requests more privileged than browser requests.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Allow https only
+Resolve host; reject loopback/private/link-local/metadata ranges
+Pin/revalidate destination on redirects and connection
+Set response-size and time limits</pre>
+        <div class="expected"><strong>Expected:</strong><pre>URL parsing alone is insufficient because of DNS rebinding and redirects</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Attack → control: malicious webhook/image URL reaches metadata/internal admin → destination allowlist, DNS/IP validation after resolution, egress firewall, redirect revalidation.</li><li>Trusting client-visible claims or identifiers without server-side authorization.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply SSRF to an order/payment API?</li><li>What failure mode changes your design for SSRF?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Attack → control: malicious webhook/image URL reaches metadata/internal admin → destination allowlist, DNS/IP validation after resolution, egress firewall, redirect revalidation.</div><div class="speak">I treat SSRF as one layer: authenticate the principal, authorize this action on this object, constrain lifetime/scope, and make revocation and detection operational.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default SSRF approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready SSRF decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="rate-limiting">
+    <div class="topic-head">
+      <h3>Rate limiting</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Security rate limits are keyed by multiple signals—account, tenant, API key, IP/device, and action—with costs proportional to risk and work.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>One global IP limit harms NAT users and is easy to distribute around; layered limits slow abuse and protect capacity.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>login: per-account + per-IP-prefix + global anomaly limit
+payment: per-user + tenant + idempotency key
+password reset: always generic response</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Rate limits complement, not replace, authorization and capacity planning</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Attack → control: credential stuffing/resource exhaustion → atomic layered token buckets, progressive challenges, bounded queues and 429 Retry-After.</li><li>Trusting client-visible claims or identifiers without server-side authorization.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply Rate limiting to an order/payment API?</li><li>What failure mode changes your design for Rate limiting?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Attack → control: credential stuffing/resource exhaustion → atomic layered token buckets, progressive challenges, bounded queues and 429 Retry-After.</div><div class="speak">I treat Rate limiting as one layer: authenticate the principal, authorize this action on this object, constrain lifetime/scope, and make revocation and detection operational.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default Rate limiting approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready Rate limiting decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="brute-force-protection">
+    <div class="topic-head">
+      <h3>Brute-force protection</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Protect authentication with rate limits, progressive delay, MFA/passkeys, breached-password checks, risk signals, and user alerts without creating account-enumeration leaks.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Permanent lockouts enable denial of service; IP-only controls fail against distributed attacks.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Return same status/body/timing shape for unknown user and wrong password
+After risk threshold: delay/challenge, do not permanently lock
+Alert user on suspicious success</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Metrics distinguish attempts, unique accounts, sources, challenges, and successful compromise indicators</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Attack → control: password spraying/credential stuffing → account+network throttles, MFA, compromised-password screening, generic errors and detection.</li><li>Trusting client-visible claims or identifiers without server-side authorization.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply Brute-force protection to an order/payment API?</li><li>What failure mode changes your design for Brute-force protection?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Attack → control: password spraying/credential stuffing → account+network throttles, MFA, compromised-password screening, generic errors and detection.</div><div class="speak">I treat Brute-force protection as one layer: authenticate the principal, authorize this action on this object, constrain lifetime/scope, and make revocation and detection operational.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default Brute-force protection approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready Brute-force protection decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="secure-cookies">
+    <div class="topic-head">
+      <h3>Secure cookies</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Security-sensitive cookies use Secure, HttpOnly, SameSite, narrow lifetime/path, and preferably the __Host- prefix; contents are opaque or integrity-protected.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Cookie attributes constrain transport and script access, but confidentiality still depends on HTTPS and server design.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Set-Cookie: __Host-session=&lt;opaque&gt;; Path=/; Secure; HttpOnly; SameSite=Lax; Max-Age=1800</pre>
+        <div class="expected"><strong>Expected:</strong><pre>No Domain attribute; rotate ID; clear with matching attributes</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Attack → control: network theft/script theft/cross-site sending → Secure + HTTPS, HttpOnly, SameSite, short lifetime and host-only scope.</li><li>Trusting client-visible claims or identifiers without server-side authorization.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply Secure cookies to an order/payment API?</li><li>What failure mode changes your design for Secure cookies?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Attack → control: network theft/script theft/cross-site sending → Secure + HTTPS, HttpOnly, SameSite, short lifetime and host-only scope.</div><div class="speak">I treat Secure cookies as one layer: authenticate the principal, authorize this action on this object, constrain lifetime/scope, and make revocation and detection operational.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default Secure cookies approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready Secure cookies decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="secrets-management">
+    <div class="topic-head">
+      <h3>Secrets management</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Secrets belong in a managed vault/KMS with workload identity, least-privilege access, rotation, versioning, audit, and memory/log hygiene.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Environment variables are delivery mechanisms, not complete lifecycle management; committed or long-lived secrets spread blast radius.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Workload identity → vault auth
+Fetch versioned payment-provider key at startup/refresh
+Redact headers and connection strings
+Dual-key rotation: issue new → deploy → revoke old</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Never print secrets; inventory owners, consumers, expiry, and rotation status</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Attack → control: repository/log/host secret exposure → vault, short-lived credentials, workload identity, scanning, redaction and tested rotation.</li><li>Trusting client-visible claims or identifiers without server-side authorization.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply Secrets management to an order/payment API?</li><li>What failure mode changes your design for Secrets management?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Attack → control: repository/log/host secret exposure → vault, short-lived credentials, workload identity, scanning, redaction and tested rotation.</div><div class="speak">I treat Secrets management as one layer: authenticate the principal, authorize this action on this object, constrain lifetime/scope, and make revocation and detection operational.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default Secrets management approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready Secrets management decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="https-and-tls-basics">
+    <div class="topic-head">
+      <h3>HTTPS and TLS basics</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>TLS authenticates the server and encrypts/integrity-protects transport. Modern configurations use TLS 1.2/1.3, valid certificates, safe ciphers, HSTS, and correct proxy termination.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Without TLS, credentials and responses can be observed or modified; application signatures do not generally replace channel security.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Strict-Transport-Security: max-age=31536000; includeSubDomains
+Trust X-Forwarded-Proto only from known proxy
+Automate certificate issuance and expiry alerts</pre>
+        <div class="expected"><strong>Expected:</strong><pre>TLS protects transit, not compromised endpoints, logs, or authorization flaws</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Attack → control: interception/downgrade → TLS 1.2/1.3, certificate validation, HSTS, redirect HTTP, secure internal service identity where required.</li><li>Trusting client-visible claims or identifiers without server-side authorization.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply HTTPS and TLS basics to an order/payment API?</li><li>What failure mode changes your design for HTTPS and TLS basics?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Attack → control: interception/downgrade → TLS 1.2/1.3, certificate validation, HSTS, redirect HTTP, secure internal service identity where required.</div><div class="speak">I treat HTTPS and TLS basics as one layer: authenticate the principal, authorize this action on this object, constrain lifetime/scope, and make revocation and detection operational.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default HTTPS and TLS basics approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready HTTPS and TLS basics decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+          
+          
+          <div class="phase-nav"><a class="btn btn-ghost" href="07-redis.html">← 07 Redis</a><a class="btn btn-primary" href="09-microservices.html">09 Microservices →</a></div>
+        </div>
+      </div>
+      <footer class="fine">Phase 08 · Node.js / TypeScript interview preparation</footer>
+    </main>
+  </div>
+  <script src="../assets/prep.js"></script>
+</body>
+</html>

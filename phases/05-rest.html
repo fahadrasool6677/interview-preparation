@@ -1,0 +1,1097 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>REST APIs — Node.js Interview Prep</title>
+  <link rel="stylesheet" href="../assets/prep.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" />
+</head>
+<body data-page="phase" data-phase="05">
+  <div class="app">
+    <nav class="sidebar">
+      <h1>Node.js Interview Prep</h1>
+      <p class="tag">5-year · Backend / Full-stack · Senior track</p>
+      <a class="nav-link" href="../nodejs-interview-preparation.html">← Hub</a>
+      <div class="nav-group">Phases</div>
+      <div id="phase-links">
+        <a class="nav-link" href="01-javascript.html">01 JavaScript</a>
+        <a class="nav-link" href="02-nodejs.html">02 Node.js</a>
+        <a class="nav-link" href="03-typescript.html">03 TypeScript</a>
+        <a class="nav-link" href="04-express.html">04 Express</a>
+        <a class="nav-link" href="05-rest.html">05 REST APIs</a>
+        <a class="nav-link" href="06-databases.html">06 Databases</a>
+        <a class="nav-link" href="07-redis.html">07 Redis</a>
+        <a class="nav-link" href="08-auth-security.html">08 Auth &amp; Security</a>
+        <a class="nav-link" href="09-microservices.html">09 Microservices</a>
+        <a class="nav-link" href="10-queues.html">10 Queues</a>
+        <a class="nav-link" href="11-system-design.html">11 System Design</a>
+        <a class="nav-link" href="12-performance.html">12 Performance</a>
+        <a class="nav-link" href="13-docker.html">13 Docker &amp; Deploy</a>
+        <a class="nav-link" href="14-testing.html">14 Testing</a>
+        <a class="nav-link" href="15-coding.html">15 Coding</a>
+        <a class="nav-link" href="16-projects.html">16 Projects</a>
+      </div>
+      <div class="meta">Mark topics reviewed as you go. Progress is stored in this browser.</div>
+    </nav>
+    <main>
+      <p class="kicker">Phase 05 · Production HTTP contracts</p>
+      <header class="hero">
+        <h2>REST APIs</h2>
+        <p class="lead">Design predictable order and payment APIs that remain correct under retries, concurrency, untrusted clients, and partial failure.</p>
+      </header>
+      <div class="note">Interview shape: claim → mechanism → production example → failure → trade-off. Reveal answers only after you attempt them aloud.</div>
+      <div class="phase-layout">
+        <aside class="toc">
+          <strong>On this page</strong>
+          <div class="toc-list"></div>
+        </aside>
+        <div class="topics">
+          
+  <article class="topic" id="rest-principles">
+    <div class="topic-head">
+      <h3>REST principles</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>REST models resources with stable identifiers and manipulates representations through a uniform, stateless HTTP interface. Constraints include client/server separation, cacheability, layered systems, and hypermedia where useful.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Uniform semantics reduce coupling: clients depend on resource contracts rather than server implementation or RPC-shaped controller names.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>POST /orders
+GET /orders/ord_42
+PATCH /orders/ord_42
+
+Representation: { &quot;id&quot;: &quot;ord_42&quot;, &quot;status&quot;: &quot;pending&quot; }</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Resource nouns, standard verbs, stateless requests</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating REST principles as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply REST principles to an order/payment API?</li><li>What failure mode changes your design for REST principles?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">REST principles should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default REST principles approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready REST principles decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="http-methods">
+    <div class="topic-head">
+      <h3>HTTP methods</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>GET and HEAD are safe; PUT, DELETE, and safe methods are idempotent; POST is generally neither; PATCH semantics depend on the patch document.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Method semantics let clients, gateways, retries, and caches behave correctly without application-specific knowledge.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>POST /orders              create
+GET /orders/ord_42         read
+PUT /orders/ord_42/address replace address
+PATCH /orders/ord_42       partial transition
+DELETE /orders/ord_42      cancel/remove</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Choose by semantics, not CRUD naming alone</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating HTTP methods as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply HTTP methods to an order/payment API?</li><li>What failure mode changes your design for HTTP methods?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">HTTP methods should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default HTTP methods approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready HTTP methods decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="http-status-codes">
+    <div class="topic-head">
+      <h3>HTTP status codes</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Use status families consistently: 2xx success, 3xx redirection/cache validation, 4xx client-contract failure, and 5xx server/dependency failure.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Precise codes are machine-readable control flow for clients, retries, alerts, and SLOs.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>201 Created + Location: /orders/ord_42
+202 Accepted for asynchronous capture
+409 Conflict for an invalid state transition
+422 Unprocessable Content for domain validation
+503 Service Unavailable + Retry-After</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Never return 200 with { success: false }</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating HTTP status codes as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply HTTP status codes to an order/payment API?</li><li>What failure mode changes your design for HTTP status codes?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">HTTP status codes should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default HTTP status codes approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready HTTP status codes decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="headers">
+    <div class="topic-head">
+      <h3>Headers</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Headers carry representation metadata, negotiation, tracing, preconditions, authentication, caching, and retry advice outside the resource body.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Separating protocol metadata from domain data enables generic infrastructure to understand requests.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Authorization: Bearer &lt;token&gt;
+Content-Type: application/json
+Accept: application/json
+Idempotency-Key: pay-abc
+If-Match: &quot;order-v7&quot;
+Traceparent: 00-...</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Validate and bound all untrusted header values</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating Headers as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply Headers to an order/payment API?</li><li>What failure mode changes your design for Headers?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Headers should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default Headers approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready Headers decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="cookies">
+    <div class="topic-head">
+      <h3>Cookies</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Cookies are browser-managed name/value state scoped by domain, path, lifetime, SameSite, Secure, and HttpOnly attributes.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>They enable automatic session transport, but that automatic behavior creates CSRF risk and demands narrow scope.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Set-Cookie: __Host-session=&lt;opaque&gt;; Path=/; Secure; HttpOnly; SameSite=Lax; Max-Age=1800</pre>
+        <div class="expected"><strong>Expected:</strong><pre>__Host- prevents Domain and requires Secure + Path=/</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating Cookies as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply Cookies to an order/payment API?</li><li>What failure mode changes your design for Cookies?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Cookies should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default Cookies approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready Cookies decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="sessions">
+    <div class="topic-head">
+      <h3>Sessions</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>A session keeps authentication state server-side and gives the client an opaque, rotating identifier.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Server-side revocation and small browser credentials are useful, while a shared store is needed across instances.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>app.post('/logout', async (req, res) =&gt; {
+  await sessions.delete(req.session.id);
+  res.clearCookie('__Host-session');
+  res.sendStatus(204);
+});</pre>
+        <div class="expected"><strong>Expected:</strong><pre>204 and the server-side session is invalidated</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating Sessions as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply Sessions to an order/payment API?</li><li>What failure mode changes your design for Sessions?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Sessions should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default Sessions approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready Sessions decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="jwt">
+    <div class="topic-head">
+      <h3>JWT</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>A JWT is a signed set of claims, not encrypted state. Verify algorithm, signature, issuer, audience, expiry, and purpose before trusting claims.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Local verification can reduce an authorization-server lookup, but revocation and claim staleness become design concerns.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>const claims = await jwtVerify(token, key, {
+  algorithms: ['RS256'], issuer: 'https://id.example', audience: 'orders-api'
+});
+if (claims.payload.typ !== 'access') throw new Error('wrong token type');</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Only validated access-token claims reach authorization</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating JWT as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply JWT to an order/payment API?</li><li>What failure mode changes your design for JWT?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">JWT should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default JWT approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready JWT decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="oauth">
+    <div class="topic-head">
+      <h3>OAuth</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>OAuth 2.0 delegates authorization. For user-facing clients, Authorization Code with PKCE exchanges a short-lived code for tokens without exposing the password.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>The resource owner can grant scoped access to a client while the authorization server centralizes consent and token issuance.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Browser → /authorize?response_type=code&amp;code_challenge=...
+Callback receives one-time code
+Backend → /token with code_verifier
+API validates access token audience + scope</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Use state for request correlation and exact redirect URI matching</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating OAuth as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply OAuth to an order/payment API?</li><li>What failure mode changes your design for OAuth?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">OAuth should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default OAuth approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready OAuth decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="refresh-tokens">
+    <div class="topic-head">
+      <h3>Refresh tokens</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Refresh tokens are long-lived credentials used only at the authorization server to mint new access tokens. Rotate them and detect reuse.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>They preserve user sessions without making every API bearer credential long-lived.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Store refresh token in Secure HttpOnly cookie
+Rotate on every use
+If an already-rotated token reappears: revoke the token family</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Never send refresh tokens to resource APIs</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating Refresh tokens as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply Refresh tokens to an order/payment API?</li><li>What failure mode changes your design for Refresh tokens?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Refresh tokens should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default Refresh tokens approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready Refresh tokens decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="access-tokens">
+    <div class="topic-head">
+      <h3>Access tokens</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Access tokens are short-lived, audience-bound credentials presented to an API and constrained by scopes or permissions.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Short lifetimes limit replay impact; audience and scope prevent a valid token from becoming universally valid.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>aud=orders-api
+scope=orders:read payments:create
+exp=now+10m
+sub=user_17</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Authorize the action and resource, not merely token validity</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating Access tokens as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply Access tokens to an order/payment API?</li><li>What failure mode changes your design for Access tokens?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Access tokens should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default Access tokens approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready Access tokens decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="idempotency">
+    <div class="topic-head">
+      <h3>Idempotency</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Idempotency makes repeated requests with the same intent produce one business effect. Persist a client key, request fingerprint, state, and original response atomically.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Networks lose responses and clients retry; exactly-once transport is unavailable, so the server must deduplicate effects.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>await db.transaction(async tx =&gt; {
+  const prior = await tx.idempotency.findUnique({ key });
+  if (prior) return replay(prior);
+  const payment = await tx.payment.create({ orderId, amount });
+  await tx.idempotency.create({ key, requestHash, response: payment });
+});</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Concurrent duplicate keys resolve to one stored result</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating Idempotency as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply Idempotency to an order/payment API?</li><li>What failure mode changes your design for Idempotency?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Idempotency should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default Idempotency approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready Idempotency decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="api-versioning">
+    <div class="topic-head">
+      <h3>API versioning</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Version only when a change cannot be made backward-compatible. Common strategies are URL major versions or media-type negotiation.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>A version is a migration contract, not a substitute for additive evolution and deprecation discipline.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>GET /v1/orders/ord_42
+Sunset: Sat, 31 Jan 2027 00:00:00 GMT
+Deprecation: true
+Link: &lt;/v2/orders/ord_42&gt;; rel=&quot;successor-version&quot;</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Publish lifecycle, telemetry, migration guide, and removal date</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating API versioning as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply API versioning to an order/payment API?</li><li>What failure mode changes your design for API versioning?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">API versioning should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default API versioning approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready API versioning decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="rate-limiting">
+    <div class="topic-head">
+      <h3>Rate limiting</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Rate limits bound work by a meaningful identity using token bucket, sliding window, or fixed window algorithms, often enforced at edge and service layers.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>They protect capacity and fairness but must account for bursts, shared NATs, authenticated identity, and fail-open/fail-closed choices.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Key: tenant:acme:payments:create
+Limit: token bucket 20 burst, 5/sec refill
+429 Too Many Requests
+Retry-After: 3</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Use stricter limits for expensive or abuse-prone operations</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating Rate limiting as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply Rate limiting to an order/payment API?</li><li>What failure mode changes your design for Rate limiting?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Rate limiting should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default Rate limiting approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready Rate limiting decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="caching">
+    <div class="topic-head">
+      <h3>Caching</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>HTTP caching uses Cache-Control, validators such as ETag, and Vary to reuse representations safely. Private and shared caches have different trust boundaries.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Freshness and conditional requests reduce latency and load while validators avoid retransmitting unchanged data.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Cache-Control: private, max-age=30
+ETag: &quot;order-42-v7&quot;
+If-None-Match: &quot;order-42-v7&quot;
+→ 304 Not Modified</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Do not publicly cache user-specific order data</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating Caching as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply Caching to an order/payment API?</li><li>What failure mode changes your design for Caching?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Caching should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default Caching approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready Caching decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="pagination">
+    <div class="topic-head">
+      <h3>Pagination</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Offset pagination requests a limit and offset/page. It is simple and supports random access but becomes costly and unstable on changing large datasets.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>The database may scan skipped rows, while inserts or deletes between requests cause duplicates and gaps.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>GET /orders?limit=25&amp;offset=50
+SELECT ... ORDER BY created_at DESC, id DESC LIMIT 25 OFFSET 50</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Useful for small administrative datasets, not deep feeds</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating Pagination as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply Pagination to an order/payment API?</li><li>What failure mode changes your design for Pagination?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Pagination should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default Pagination approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready Pagination decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="cursor-pagination">
+    <div class="topic-head">
+      <h3>Cursor pagination</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Cursor pagination encodes the last deterministic sort tuple and applies a keyset predicate for the next page.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>An indexed seek is stable and scales independently of page depth; a unique tiebreaker prevents lost equal-sort rows.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Cursor decodes to (created_at='2026-08-24T10:00Z', id='ord_42')
+WHERE (created_at, id) &lt; ($1, $2)
+ORDER BY created_at DESC, id DESC
+LIMIT 25</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Opaque, signed cursor; fetch limit + 1 to compute hasNext</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating Cursor pagination as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply Cursor pagination to an order/payment API?</li><li>What failure mode changes your design for Cursor pagination?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Cursor pagination should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default Cursor pagination approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready Cursor pagination decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="api-security">
+    <div class="topic-head">
+      <h3>API security</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>API security layers authentication, object- and action-level authorization, validation, abuse controls, encryption, secure defaults, auditability, and dependency hygiene.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>No single control covers stolen credentials, confused-deputy bugs, injection, replay, and operational compromise.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Gateway: TLS, coarse limits, body bounds
+Service: authn, tenant/object authz, validation
+Data: constraints, least privilege, encryption
+Ops: secret rotation, audit logs, alerts</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Deny by default and test cross-tenant access</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating API security as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply API security to an order/payment API?</li><li>What failure mode changes your design for API security?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">API security should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default API security approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready API security decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="cors">
+    <div class="topic-head">
+      <h3>CORS</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>CORS is a browser response-sharing policy. The server explicitly allows trusted origins, methods, and headers; credentialed requests require an exact origin.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Same-origin policy blocks script access by default; CORS relaxes that boundary but is not authentication or a server-to-server firewall.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>const allowed = new Set(['https://shop.example']);
+app.use(cors({
+  origin(origin, cb) { cb(null, allowed.has(origin)); },
+  credentials: true,
+  methods: ['GET', 'POST']
+}));</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Never combine credentials with reflected arbitrary origins</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating CORS as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply CORS to an order/payment API?</li><li>What failure mode changes your design for CORS?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">CORS should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default CORS approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready CORS decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="csrf">
+    <div class="topic-head">
+      <h3>CSRF</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>CSRF causes a browser to submit an authenticated request chosen by an attacker. Use SameSite cookies plus origin checks and CSRF tokens for state changes.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Browsers attach cookies automatically even when a hostile site initiates the request.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Cookie: SameSite=Lax; Secure; HttpOnly
+POST requires X-CSRF-Token matching server/session token
+Reject unexpected Origin / Sec-Fetch-Site</pre>
+        <div class="expected"><strong>Expected:</strong><pre>CORS alone does not stop simple cross-origin form submissions</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating CSRF as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply CSRF to an order/payment API?</li><li>What failure mode changes your design for CSRF?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">CSRF should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default CSRF approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready CSRF decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="request-validation">
+    <div class="topic-head">
+      <h3>Request validation</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Validate params, query, headers, and body at the boundary with strict schemas, size limits, canonicalization, and domain-level checks.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>TypeScript types disappear at runtime; malformed or over-posted input must not reach business logic.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Node.js</div>
+        <pre>const input = CreateOrder.parse(req.body); // strict schema
+await authorize(req.user, 'order:create', input.customerId);
+const order = await service.create(input);</pre>
+        <div class="expected"><strong>Expected:</strong><pre>400/422 with field errors; unknown fields rejected</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating Request validation as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply Request validation to an order/payment API?</li><li>What failure mode changes your design for Request validation?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Request validation should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default Request validation approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready Request validation decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="response-formatting">
+    <div class="topic-head">
+      <h3>Response formatting</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Use a consistent resource and collection envelope only where it adds metadata; preserve types, stable field names, links/cursors, and explicit nullability.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Predictability simplifies clients and evolution, while unnecessary envelopes and inconsistent dates create coupling.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>{
+  &quot;data&quot;: [{ &quot;id&quot;: &quot;ord_42&quot;, &quot;totalMinor&quot;: 4999, &quot;currency&quot;: &quot;USD&quot; }],
+  &quot;page&quot;: { &quot;nextCursor&quot;: &quot;opaque&quot;, &quot;hasNext&quot;: true }
+}</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Money uses minor units plus currency; timestamps use ISO 8601 UTC</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating Response formatting as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply Response formatting to an order/payment API?</li><li>What failure mode changes your design for Response formatting?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Response formatting should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default Response formatting approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready Response formatting decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="error-handling">
+    <div class="topic-head">
+      <h3>Error handling</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Map known failures to stable public problem details; attach a correlation ID, log internal causes once, and distinguish retryable from permanent failures.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Clients need actionable contracts while stack traces, SQL errors, and provider details must remain private.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>HTTP/1.1 409 Conflict
+Content-Type: application/problem+json
+{
+ &quot;type&quot;:&quot;https://api.example/problems/order-state&quot;,
+ &quot;title&quot;:&quot;Invalid order transition&quot;,
+ &quot;status&quot;:409,
+ &quot;code&quot;:&quot;ORDER_NOT_PAYABLE&quot;,
+ &quot;traceId&quot;:&quot;tr_7&quot;
+}</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Stable machine code; safe human detail; no stack trace</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating Error handling as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply Error handling to an order/payment API?</li><li>What failure mode changes your design for Error handling?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Error handling should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default Error handling approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready Error handling decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="scenario-ecommerce-order-api">
+    <div class="topic-head">
+      <h3>Design e-commerce order API</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Model order creation, line-item price snapshots, inventory reservation, payment intent, state transitions, cancellation, and fulfillment as explicit resources and workflows.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Order and payment lifecycles cross consistency boundaries; state machines and durable events make partial failure visible and recoverable.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>POST /orders (Idempotency-Key)
+POST /orders/{id}/payment-intents
+POST /orders/{id}/cancel
+GET /orders/{id}
+
+pending → reserved → payment_pending → paid → fulfilled
+                         ↘ failed/cancelled</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Transactional order write + outbox; async provider reconciliation</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Letting clients set totals or arbitrary states.</li><li>Holding a database transaction open across payment-provider calls.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply Design e-commerce order API to an order/payment API?</li><li>What failure mode changes your design for Design e-commerce order API?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Design e-commerce order API should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default Design e-commerce order API approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready Design e-commerce order API decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="scenario-prevent-duplicates">
+    <div class="topic-head">
+      <h3>Prevent duplicate payment/order requests</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Combine idempotency keys, unique constraints, request fingerprints, atomic state transitions, provider idempotency, and reconciliation.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Duplicate delivery and ambiguous timeouts are normal. Defense in depth prevents two local rows and two external charges.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>UNIQUE (merchant_id, idempotency_key)
+UNIQUE (order_id) WHERE payment_status IN ('processing','succeeded')
+Compare request hash before replay
+Pass the same key to payment provider</pre>
+        <div class="expected"><strong>Expected:</strong><pre>One intent, one durable outcome, replayed response</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Using an in-memory Set for deduplication.</li><li>Checking then inserting without a unique constraint or transaction.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply Prevent duplicate payment/order requests to an order/payment API?</li><li>What failure mode changes your design for Prevent duplicate payment/order requests?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Prevent duplicate payment/order requests should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default Prevent duplicate payment/order requests approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready Prevent duplicate payment/order requests decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+
+  <article class="topic" id="scenario-secure-public-api">
+    <div class="topic-head">
+      <h3>Secure a public API</h3>
+      <span class="badge high">High</span>
+    </div>
+    <div class="section-label">Concept</div>
+    <p>Start from assets and abuse cases, then layer TLS, scoped credentials, object authorization, schema/body limits, quotas, idempotency, safe errors, audit logs, and incident controls.</p>
+    <div class="section-label">Why it works this way</div>
+    <p>Public reachability means every input and workflow is adversarial; controls must reduce both exploitability and blast radius.</p>
+    <div class="section-label">Running example</div>
+    
+      <div class="example-block">
+        <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px">Example</div>
+        <pre>Edge → TLS/WAF/coarse quota
+API → token validation + scope + tenant/object authz
+Handler → strict schema + state invariant
+Storage → constraints + least privilege
+Telemetry → audit + anomaly alert + revocation</pre>
+        <div class="expected"><strong>Expected:</strong><pre>Threat model includes BOLA, credential stuffing, injection, replay, and resource exhaustion</pre></div>
+      </div>
+    
+    <div class="section-label">Common mistakes / interview traps</div>
+    <ul><li>Treating Secure a public API as a library setting instead of defining its failure and consistency behavior.</li><li>Ignoring retries, concurrency, observability, and trust boundaries in production.</li></ul>
+    <div class="section-label">Interview questions</div>
+    <ul><li>How would you apply Secure a public API to an order/payment API?</li><li>What failure mode changes your design for Secure a public API?</li></ul>
+    <details class="reveal">
+      <summary>Reveal model answers</summary>
+      <div class="speak">Secure a public API should be explained as a contract: state the invariant, the mechanism that preserves it, and the behavior under retry or partial failure.</div><div class="speak">For orders and payments, I make ownership, consistency boundaries, and externally visible errors explicit, then instrument the important decisions.</div>
+    </details>
+    <div class="section-label">Senior follow-ups</div>
+    <ul><li>What trade-off would make you reject the default Secure a public API approach?</li><li>How would you roll this out and prove it behaves correctly?</li></ul>
+    <details class="reveal">
+      <summary>Reveal senior-level answers</summary>
+      <div class="speak">I compare correctness, latency, operability, and cost. I prefer the simplest mechanism that preserves the business invariant and has a safe degradation path.</div><div class="speak">I use compatibility tests, staged rollout, metrics by outcome, structured audit events, and a rollback path; load and fault tests cover retries and dependency failure.</div>
+    </details>
+    <div class="section-label">Exercise</div>
+    <p>Design a production-ready Secure a public API decision for an order/payment endpoint. State the invariant, failure response, telemetry, and one rejected alternative.</p>
+    <div class="topic-progress">
+      <label><input type="checkbox" class="mark-done" /> Mark as reviewed</label>
+    </div>
+  </article>
+          
+          
+          <div class="phase-nav"><a class="btn btn-ghost" href="04-express.html">← 04 Express</a><a class="btn btn-primary" href="06-databases.html">06 Databases →</a></div>
+        </div>
+      </div>
+      <footer class="fine">Phase 05 · Node.js / TypeScript interview preparation</footer>
+    </main>
+  </div>
+  <script src="../assets/prep.js"></script>
+</body>
+</html>
