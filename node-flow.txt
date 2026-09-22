@@ -1,0 +1,49 @@
+1. What is Node.js?
+2. Why Node.js?
+3. Node.js vs Browser
+4. Running Node.js
+        ↓
+5. Node.js Architecture
+        ↓
+6. V8
+        ↓
+7. libuv
+        ↓
+8. Event Loop ⭐
+        ↓
+9. Call Stack
+        ↓
+10. Callback Queue
+        ↓
+11. Microtasks
+        ↓
+12. process.nextTick()
+        ↓
+13. setTimeout()
+14. setImmediate()
+        ↓
+15. Worker Pool
+        ↓
+16. Blocking vs Non-blocking
+        ↓
+17. CommonJS vs ES Modules
+        ↓
+18. npm / package.json
+        ↓
+19. Node.js Core Modules
+        ↓
+20. fs / path / http / events
+        ↓
+21. Streams & Buffers
+        ↓
+22. Error handling
+        ↓
+23. HTTP server
+        ↓
+24. Express
+        ↓
+25. Database / PostgreSQL
+        ↓
+26. Authentication
+        ↓
+27. Production / scaling
