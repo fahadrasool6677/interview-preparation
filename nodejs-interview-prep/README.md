@@ -11,10 +11,10 @@ No `npm install` is required to study the site.
 
 ## 1. Start the local server
 
-From the project root:
+From this folder:
 
 ```bash
-cd ~/workspace/interview-preparation
+cd nodejs-interview-prep
 python3 -m http.server 8765 --bind 127.0.0.1
 ```
 
@@ -63,7 +63,7 @@ Ctrl + C
 Only needed if you change the generators under `scripts/`:
 
 ```bash
-cd ~/workspace/interview-preparation
+cd nodejs-interview-prep
 node scripts/generate-phases-01-04.js
 node scripts/generate-phases-05-08.js
 node scripts/generate-phases-09-12.js
@@ -84,6 +84,7 @@ Then hard-refresh the browser (`Ctrl + Shift + R`).
 | `assets/prep.js` | Nav, reveal, JS runner, progress |
 | `scripts/` | Generators that rebuild phase HTML |
 | `prompts/` | Source interview-prep prompts |
+| `research/` | Market research notes |
 
 ---
 
@@ -93,5 +94,5 @@ Then hard-refresh the browser (`Ctrl + Shift + R`).
 | --- | --- |
 | Phase links do nothing | Use `http://127.0.0.1:8765/...`, not `file://` |
 | Port already in use | Pick another port, e.g. `python3 -m http.server 8766 --bind 127.0.0.1`, then open that port in the URL |
-| Styles/scripts missing | Confirm the server was started from `interview-preparation/` (project root) |
+| Styles/scripts missing | Confirm the server was started from `nodejs-interview-prep/` |
 | Progress disappeared | Progress is per-browser `localStorage`; clearing site data removes it |
