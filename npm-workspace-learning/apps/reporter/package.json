@@ -1,0 +1,14 @@
+{
+  "name": "reporter",
+  "version": "1.0.0",
+  "description": "Second app: consumes both workspace services",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@learning/pricing-service": "*",
+    "@learning/stats-service": "*"
+  },
+  "license": "MIT"
+}

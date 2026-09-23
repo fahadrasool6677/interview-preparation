@@ -1,0 +1,18 @@
+{
+  "name": "npm-workspace-learning",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "services/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "start": "npm run start --workspace=app",
+    "start:app": "npm run start --workspace=app",
+    "start:reporter": "npm run start --workspace=reporter",
+    "start:pricing": "npm run start --workspace=@learning/pricing-service",
+    "start:stats": "npm run start --workspace=@learning/stats-service",
+    "start:all": "npm run start --workspaces --if-present",
+    "test:package": "npm test --workspace=@learning/math-utils"
+  }
+}

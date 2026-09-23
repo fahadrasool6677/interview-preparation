@@ -1,0 +1,17 @@
+{
+  "name": "fs-learning",
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "dev": "node src/app.js",
+    "dev:callbacks": "node src/callbacks.js",
+    "dev:promises": "node src/promises.js",
+    "dev:asyncAwait": "node src/asyncAwait.js",
+    "dev:exercise": "node src/exercise.js"
+  },
+  "keywords": []
+}

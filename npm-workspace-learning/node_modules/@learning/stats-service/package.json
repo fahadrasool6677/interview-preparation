@@ -1,0 +1,13 @@
+{
+  "name": "@learning/stats-service",
+  "version": "1.0.0",
+  "description": "Demo stats service that uses @learning/math-utils",
+  "main": "index.js",
+  "scripts": {
+    "start": "node run.js"
+  },
+  "dependencies": {
+    "@learning/math-utils": "*"
+  },
+  "license": "MIT"
+}
