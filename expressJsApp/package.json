@@ -5,9 +5,9 @@
   "license": "ISC",
   "author": "Fahad Rasool",
   "type": "module",
-  "main": "app.js",
+  "main": "app.ts",
   "scripts": {
-    "dev": "node app.js"
+    "dev": "node app.ts"
   },
   "dependencies": {
     "express": "^5.2.1"
