@@ -1,0 +1,15 @@
+{
+  "name": "expressjsapp",
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "Fahad Rasool",
+  "type": "module",
+  "main": "app.js",
+  "scripts": {
+    "dev": "node app.js"
+  },
+  "dependencies": {
+    "express": "^5.2.1"
+  }
+}
