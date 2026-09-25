@@ -1,7 +1,7 @@
-const path = require("path");
-const fs = require("fs");
-console.log("__filename",__filename);
-console.log("__dirname",__dirname);
+// const path = require("path");
+// const fs = require("fs");
+// console.log("__filename",__filename);
+// console.log("__dirname",__dirname);
 // fs.mkdir("data", (err) => {
 //     if (err) {
 //         console.error(err);
