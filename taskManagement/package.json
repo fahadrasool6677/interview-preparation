@@ -1,0 +1,25 @@
+{
+  "name": "taskmanagement",
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "Fahad Rasool",
+  "type": "module",
+  "main": "server.ts",
+  "scripts": {
+    "dev": "nodemon  src/server.ts",
+    "postinstall": "prisma skills sync || exit 0"
+  },
+  "dependencies": {
+    "@prisma/client": "^7.10.0",
+    "dotenv": "^18.0.4",
+    "express": "^5.2.1",
+    "nodemon": "^3.1.14",
+    "prisma": "^7.10.0",
+    "typescript": "^7.0.2"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.6.2"
+  }
+}
